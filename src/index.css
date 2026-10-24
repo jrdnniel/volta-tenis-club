@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/* ======================================
+   VOLTA TENIS CLUB — CLEAN WHITE THEME
+   ====================================== */
+
+@theme {
+  /* Court Green — Primary */
+  --color-court-50: #f0faf4;
+  --color-court-100: #d6f2e0;
+  --color-court-200: #ade5c3;
+  --color-court-300: #78d3a0;
+  --color-court-400: #40b878;
+  --color-court-500: #2d9d61;
+  --color-court-600: #1e7d4c;
+  --color-court-700: #1a6540;
+  --color-court-800: #185035;
+  --color-court-900: #15422d;
+
+  /* Clay Orange — Accent / CTA */
+  --color-clay-50: #fef4f0;
+  --color-clay-100: #fde5da;
+  --color-clay-200: #fbc8b3;
+  --color-clay-300: #f8a482;
+  --color-clay-400: #f4794e;
+  --color-clay-500: #e76f51;
+  --color-clay-600: #d45a38;
+  --color-clay-700: #b0452b;
+  --color-clay-800: #8e3925;
+  --color-clay-900: #753222;
+
+  /* Slate — Text & Neutral */
+  --color-slate-50: #f8f9fb;
+  --color-slate-100: #f0f2f5;
+  --color-slate-200: #e2e5ea;
+  --color-slate-300: #c9cdd6;
+  --color-slate-400: #9ba3b0;
+  --color-slate-500: #6b7585;
+  --color-slate-600: #4f5869;
+  --color-slate-700: #3a4250;
+  --color-slate-800: #2a3140;
+  --color-slate-900: #1b2a3d;
+}
+
+/* ======================================
+   BASE STYLES
+   ====================================== */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased text-gray-700 bg-white;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+
+  ::selection {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #1f2937;
+  }
+}
+
+/* ======================================
+   SCROLL-REVEAL ANIMATIONS
+   ====================================== */
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.revealed { opacity: 1; transform: translateY(0); }
+
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-left.revealed { opacity: 1; transform: translateX(0); }
+
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-right.revealed { opacity: 1; transform: translateX(0); }
+
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-scale.revealed { opacity: 1; transform: scale(1); }
+
+  .delay-100 { transition-delay: 100ms; }
+  .delay-200 { transition-delay: 200ms; }
+  .delay-300 { transition-delay: 300ms; }
+  .delay-400 { transition-delay: 400ms; }
+  .delay-500 { transition-delay: 500ms; }
+  .delay-600 { transition-delay: 600ms; }
+
+  .animate-in {
+    animation: fadeZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-overlay {
+    animation: fadeIn 0.25s ease forwards;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float 6s ease-in-out 2s infinite;
+  }
+  .animate-pulse-glow {
+    animation: pulseGlow 2.5s ease-in-out infinite;
+  }
+}
+
+/* ======================================
+   KEYFRAMES
+   ====================================== */
+@keyframes fadeZoomIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(0.5deg); }
+  66% { transform: translateY(5px) rotate(-0.5deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+}
+
+/* ======================================
+   CUSTOM SCROLLBAR
+   ====================================== */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
