@@ -7,15 +7,20 @@ const Footer = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Brand Info */}
         <div className="md:col-span-2">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-extrabold text-sm">V</span>
+          <Link to="/" className="inline-flex items-center gap-3 mb-3 group">
+            <div className="w-10 h-10 bg-[#163D2B] rounded-xl flex items-center justify-center shadow-md shadow-emerald-950/20 group-hover:scale-105 transition-transform duration-200">
+              <span className="text-emerald-200 font-black text-lg tracking-tighter">V</span>
             </div>
-            <span className="font-extrabold text-gray-800 text-lg tracking-tight">
-              Volta <span className="text-emerald-600">Tenis</span>
-            </span>
-          </div>
-          <p className="text-sm text-gray-400 mt-2 max-w-md leading-relaxed">
+            <div className="leading-none text-left">
+              <span className="font-black text-slate-900 text-lg tracking-tight block">
+                Volta <span className="text-emerald-800 font-extrabold">Tenis</span>
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 block">
+                Training Club
+              </span>
+            </div>
+          </Link>
+          <p className="text-sm text-gray-500 mt-2 max-w-md leading-relaxed">
             Komunitas dan fasilitas lapangan tenis modern dengan dukungan pelatih profesional
             tersertifikasi.
           </p>

@@ -120,18 +120,22 @@ export const getInviteByToken = validateInviteToken;
 export const getInviteTokensByAdmin = async (adminUid) => {
   const q = query(
     collection(db, INVITE_COLLECTION),
-    where('createdBy', '==', adminUid),
-    orderBy('createdAt', 'desc')
+    where('createdBy', '==', adminUid)
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({
+  const data = snapshot.docs.map((d) => ({
     id: d.id,
     ...d.data(),
     createdAt: d.data().createdAt?.toDate?.() || null,
     expiresAt: d.data().expiresAt?.toDate?.() || null,
     usedAt: d.data().usedAt?.toDate?.() || null,
   }));
+  return data.sort((a, b) => {
+    const timeA = a.createdAt?.getTime?.() || 0;
+    const timeB = b.createdAt?.getTime?.() || 0;
+    return timeB - timeA;
+  });
 };
 
 /**

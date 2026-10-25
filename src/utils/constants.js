@@ -6,6 +6,8 @@ export const ROLES = {
 
 export const BOOKING_STATUS = {
   CONFIRMED: 'confirmed',
+  COMPLETED_BY_COACH: 'completed_by_coach',
+  COMPLETED: 'completed',
   CANCELLED: 'cancelled',
 };
 

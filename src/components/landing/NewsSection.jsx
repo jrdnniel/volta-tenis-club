@@ -155,7 +155,7 @@ export default function NewsSection() {
   const [selectedArticle, setSelectedArticle] = useState(null);
 
   return (
-    <section id="berita" className="py-20 bg-slate-50 border-t border-slate-200/80">
+    <section id="berita" className="pt-16 pb-8 sm:pb-10 bg-slate-50 border-t border-slate-200/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="reveal max-w-2xl mb-12">

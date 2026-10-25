@@ -14,6 +14,7 @@ import {
 import { db } from '../config/firebase';
 import { BOOKING_STATUS } from '../utils/constants';
 import { isTimeOverlap } from '../utils/validators';
+import { createNotification } from './notificationService';
 
 const COLLECTION = 'bookings';
 
@@ -113,22 +114,28 @@ export const getBookingsByDate = async (date) => {
   const q = query(
     collection(db, COLLECTION),
     where('date', '==', date),
-    where('status', '==', BOOKING_STATUS.CONFIRMED),
-    orderBy('startTime')
+    where('status', '==', BOOKING_STATUS.CONFIRMED)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const bookings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  // Urutkan berdasarkan jam mulai tanpa memerlukan composite index
+  return bookings.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 };
 
 // Ambil sesi pelatihan milik member tertentu
 export const getMyBookings = async (userId) => {
   const q = query(
     collection(db, COLLECTION),
-    where('userId', '==', userId),
-    orderBy('date', 'desc')
+    where('userId', '==', userId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const bookings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  // Urutkan tanggal terbaru & jam di sisi client (menghindari error composite index Firestore)
+  return bookings.sort((a, b) => {
+    const dateDiff = (b.date || '').localeCompare(a.date || '');
+    if (dateDiff !== 0) return dateDiff;
+    return (b.startTime || '').localeCompare(a.startTime || '');
+  });
 };
 
 // Batalkan sesi pelatihan
@@ -148,4 +155,71 @@ export const getAllCourts = async () => {
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+};
+
+// Ambil semua sesi pelatihan yang ditugaskan kepada Coach tertentu
+export const getCoachBookings = async (coachId) => {
+  const q = query(
+    collection(db, COLLECTION),
+    where('coachId', '==', coachId)
+  );
+  const snapshot = await getDocs(q);
+  const bookings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return bookings.sort((a, b) => {
+    const dateDiff = (b.date || '').localeCompare(a.date || '');
+    if (dateDiff !== 0) return dateDiff;
+    return (b.startTime || '').localeCompare(a.startTime || '');
+  });
+};
+
+// Pelatih melapor bahwa sesi pelatihan telah selesai dilaksanakan
+export const reportBookingCompleted = async (
+  bookingId,
+  { coachNotes = '', coachUid, coachName, bookingData = {} }
+) => {
+  const docRef = doc(db, COLLECTION, bookingId);
+  await updateDoc(docRef, {
+    status: BOOKING_STATUS.COMPLETED_BY_COACH,
+    completedAt: serverTimestamp(),
+    completedByCoach: coachUid,
+    coachNotes: coachNotes || '',
+    coachReady: true,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Kirim notifikasi realtime ke Admin
+  await createNotification({
+    type: 'COACH_SESSION_COMPLETED',
+    title: 'Pelatih Melaporkan Selesai Melatih',
+    message: `Coach ${coachName || 'Pelatih'} telah menyelesaikan sesi latihan bersama ${
+      bookingData.userName || 'Member'
+    } (${bookingData.date || 'Hari ini'} pukul ${bookingData.startTime || ''} - ${
+      bookingData.endTime || ''
+    }). Coach kini telah SIAP untuk jadwal berikutnya.`,
+    bookingId,
+    coachId: coachUid,
+    coachName: coachName || 'Pelatih Volta',
+    targetRole: 'admin',
+    metadata: {
+      date: bookingData.date || '',
+      startTime: bookingData.startTime || '',
+      endTime: bookingData.endTime || '',
+      userName: bookingData.userName || '',
+      courtName: bookingData.courtName || 'Lapangan Volta',
+    },
+  });
+};
+
+// Admin mengonfirmasi penyelesaian sesi latihan dari laporan pelatih
+export const confirmBookingCompletedByAdmin = async (bookingId, adminUid = null) => {
+  const docRef = doc(db, COLLECTION, bookingId);
+  const updateData = {
+    status: BOOKING_STATUS.COMPLETED,
+    verifiedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  if (adminUid) {
+    updateData.verifiedByAdmin = adminUid;
+  }
+  await updateDoc(docRef, updateData);
 };

@@ -6,7 +6,9 @@ const statusConfig = {
   [DUES_STATUS.UNPAID]: { label: 'Belum Bayar', color: 'bg-red-100 text-red-800' },
   [DUES_STATUS.PARTIAL]: { label: 'Sebagian', color: 'bg-amber-100 text-amber-800' },
   // Booking
-  [BOOKING_STATUS.CONFIRMED]: { label: 'Dikonfirmasi', color: 'bg-blue-100 text-blue-800' },
+  [BOOKING_STATUS.CONFIRMED]: { label: 'Aktif / Terjadwal', color: 'bg-emerald-100 text-emerald-800' },
+  [BOOKING_STATUS.COMPLETED_BY_COACH]: { label: 'Laporan Selesai (Perlu Konfirmasi)', color: 'bg-amber-100 text-amber-900 border border-amber-200' },
+  [BOOKING_STATUS.COMPLETED]: { label: 'Selesai Terverifikasi', color: 'bg-blue-100 text-blue-800' },
   [BOOKING_STATUS.CANCELLED]: { label: 'Dibatalkan', color: 'bg-gray-100 text-gray-800' },
   // Verification
   [VERIFICATION_STATUS.PENDING]: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800' },

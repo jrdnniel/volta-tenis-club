@@ -78,6 +78,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       title: 'Pelatihan',
       items: [
+        { label: 'Sesi Mengajar Saya', icon: HiClipboardDocumentList, path: '/dashboard/coach-sessions' },
         { label: 'Jadwal Mengajar Saya', icon: HiClock, path: '/dashboard/coach-schedule' },
       ],
     },

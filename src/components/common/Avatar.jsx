@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { HiUser } from 'react-icons/hi2';
 
 const sizes = {
@@ -10,6 +11,12 @@ const sizes = {
 };
 
 const Avatar = ({ src, name, size = 'md', className = '' }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
   const initials = name
     ? name
         .split(' ')
@@ -19,11 +26,12 @@ const Avatar = ({ src, name, size = 'md', className = '' }) => {
         .slice(0, 2)
     : '';
 
-  if (src) {
+  if (src && !hasError) {
     return (
       <img
         src={src}
         alt={name || 'Avatar'}
+        onError={() => setHasError(true)}
         className={`${sizes[size]} rounded-full object-cover ring-2 ring-white ${className}`}
       />
     );

@@ -83,73 +83,92 @@ const RegisterPage = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col lg:flex-row bg-[#FAF8F5] text-slate-800 antialiased font-sans selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="h-screen overflow-hidden flex flex-col lg:flex-row bg-[#FAF8F5] text-slate-800 antialiased font-sans selection:bg-emerald-100 selection:text-emerald-900 relative">
+      {/* ========================================================
+          NAVBAR RESMI (POSISI & KOORDINAT 100% IDENTIK DENGAN LANDING PAGE)
+          ======================================================== */}
+      <header className="fixed top-0 left-0 w-full z-40 py-5 pointer-events-none">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            {/* Logo Klub di Sudut Atas Kiri (Persis dengan Landing Page) */}
+            <div className="pointer-events-auto">
+              <Link to="/" className="flex items-center gap-3 group">
+                <div className="w-10 h-10 bg-[#163D2B] rounded-xl flex items-center justify-center shadow-md shadow-emerald-950/20 group-hover:scale-105 transition-transform duration-200">
+                  <span className="text-emerald-200 font-black text-lg tracking-tighter">V</span>
+                </div>
+                <div className="leading-none text-left">
+                  <span className="font-black text-slate-900 text-lg tracking-tight block">
+                    Volta <span className="text-emerald-800 font-extrabold">Tenis</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 block">
+                    Training Club
+                  </span>
+                </div>
+              </Link>
+            </div>
+
+            {/* Navigasi Kembali ke Beranda di Sudut Atas Kanan */}
+            <div className="pointer-events-auto">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors group px-3 py-1.5 rounded-xl hover:bg-stone-200/50"
+              >
+                <HiArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Kembali ke Beranda</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* ========================================================
           KOLOM KIRI: BRANDING & HIGHLIGHT VOLTA TENIS CLUB
           ======================================================== */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#FAF8F5] p-6 sm:p-8 xl:p-12 flex-col justify-between border-r border-[#ECE7DE] relative overflow-hidden h-full">
-        {/* Brand Logo */}
-        <div className="relative z-10 shrink-0">
-          <Link to="/" className="inline-flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-emerald-800 text-white rounded-xl flex items-center justify-center font-extrabold text-base shadow-sm group-hover:scale-105 transition-transform">
-              V
-            </div>
-            <div>
-              <span className="font-extrabold text-slate-900 text-lg tracking-tight block leading-tight">
-                Volta <span className="text-emerald-700">Tenis</span>
-              </span>
-              <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase block">
-                Klub Pelatihan Tenis
-              </span>
-            </div>
-          </Link>
-        </div>
-
+      <div className="hidden lg:flex lg:w-1/2 bg-[#FAF8F5] px-6 sm:px-8 xl:px-12 pt-24 pb-8 flex-col justify-between border-r border-[#ECE7DE] relative overflow-hidden h-full">
         {/* Ambient Ring Pattern */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/3 -translate-y-1/4 w-[480px] h-[480px] rounded-full border border-[#E5E0D5]/70" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/3 -translate-y-1/4 w-[340px] h-[340px] rounded-full border border-[#E5E0D5]/90" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full border border-[#E5E0D5]/70" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full border border-[#E5E0D5]/90" />
 
-        {/* Hero Copy & Highlight Card */}
-        <div className="relative z-10 max-w-md my-auto py-4">
-          <div className="inline-flex items-center gap-2 bg-[#EAE5D9]/70 rounded-full px-3 py-1 mb-4">
+        {/* Hero Copy & Highlight Card (Centered & Balanced) */}
+        <div className="relative z-10 max-w-md mx-auto my-auto py-2 flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 bg-[#EAE5D9]/70 rounded-full px-3.5 py-1 mb-3">
             <HiSparkles className="w-3.5 h-3.5 text-emerald-800" />
             <span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">
               Komunitas & Latihan
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.18] mb-3">
-            Langkah awal<br />
-            menuju servis<br />
-            <span className="font-serif italic font-normal text-emerald-800">yang sempurna.</span>
+          <h1 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.18] mb-2.5 text-center">
+            Langkah awal menuju servis{' '}
+            <span className="font-serif italic font-normal text-emerald-800 block mt-1">
+              yang sempurna.
+            </span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal mb-5 max-w-sm">
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal mb-4 max-w-sm mx-auto text-center">
             Daftar menjadi anggota resmi Volta Tenis Club. Nikmati fasilitas lapangan berstandar internasional dan komunitas olahraga yang suportif.
           </p>
 
           {/* Feature Card */}
-          <div className="relative inline-block">
-            <div className="w-72 bg-[#E9F0E4] border border-[#D5E2CD] rounded-2xl p-4 shadow-[0_10px_25px_rgba(20,50,30,0.05)] transform rotate-1 hover:rotate-0 transition-transform duration-300">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-800 block mb-1">
-                MEMBERSHIP PRIVILEGE
-              </span>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight leading-snug mb-1.5">
-                Akses Program Pelatihan & Event
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed mb-2.5">
-                Jadwal latihan terpadu bersama coach bersertifikasi, sparring partner, dan komunitas klub.
-              </p>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900 bg-white/90 border border-[#D5E2CD] rounded-lg px-2.5 py-1 w-fit shadow-xs">
-                <HiCheckCircle className="w-4 h-4 text-emerald-700" />
-                <span>Pendaftaran Gratis</span>
-              </div>
+          <div className="w-full max-w-xs bg-[#E9F0E4] border border-[#D5E2CD] rounded-2xl p-4 shadow-[0_10px_25px_rgba(20,50,30,0.05)] mx-auto text-center flex flex-col items-center">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-800 block mb-1">
+              MEMBERSHIP PRIVILEGE
+            </span>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight leading-snug mb-1.5">
+              Akses Program Pelatihan & Event
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed mb-2 max-w-xs">
+              Jadwal latihan terpadu bersama coach bersertifikasi, sparring partner, dan komunitas klub.
+            </p>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900 bg-white/90 border border-[#D5E2CD] rounded-lg px-2.5 py-1 w-fit shadow-xs">
+              <HiCheckCircle className="w-4 h-4 text-emerald-700" />
+              <span>Pendaftaran Gratis</span>
             </div>
           </div>
         </div>
 
         {/* Bottom Tagline */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 font-medium pt-3 shrink-0">
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 font-medium pt-2 shrink-0">
           <span>Kenyamanan dan profesionalisme bermain tenis.</span>
           <span className="text-slate-300">&copy; Volta</span>
         </div>
@@ -158,18 +177,7 @@ const RegisterPage = () => {
       {/* ========================================================
           KOLOM KANAN: FORMULIR PENDAFTARAN MEMBER (SOLID NO SCROLL)
           ======================================================== */}
-      <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 xl:p-12 flex flex-col justify-between h-full overflow-hidden">
-        {/* Top Bar: Navigasi */}
-        <div className="flex items-center justify-start mb-3 shrink-0">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors group"
-          >
-            <HiArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Kembali ke Beranda</span>
-          </Link>
-        </div>
-
+      <div className="w-full lg:w-1/2 bg-white px-6 sm:px-8 xl:px-12 pt-24 pb-8 flex flex-col justify-between h-full overflow-hidden">
         {/* Form Container */}
         <div className="w-full max-w-md mx-auto my-auto py-1">
           <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1">

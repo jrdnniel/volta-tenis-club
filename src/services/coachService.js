@@ -18,11 +18,11 @@ const COLLECTION = 'coachSchedules';
 export const getCoachSchedule = async (coachId) => {
   const q = query(
     collection(db, COLLECTION),
-    where('coachId', '==', coachId),
-    orderBy('dayOfWeek')
+    where('coachId', '==', coachId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const schedules = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return schedules.sort((a, b) => (a.dayOfWeek ?? 0) - (b.dayOfWeek ?? 0));
 };
 
 // Add a schedule slot for a coach

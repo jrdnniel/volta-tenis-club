@@ -3,7 +3,12 @@ import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { BOOKING_STATUS } from '../../utils/constants';
-import { cancelBooking, getAllCourts, assignCourtToBooking } from '../../services/bookingService';
+import {
+  cancelBooking,
+  getAllCourts,
+  assignCourtToBooking,
+  confirmBookingCompletedByAdmin,
+} from '../../services/bookingService';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -25,7 +30,7 @@ import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 
 const AllBookingsPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [courts, setCourts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,22 +49,24 @@ const AllBookingsPage = () => {
   const fetchBookingsAndCourts = async () => {
     setLoading(true);
     try {
-      let q;
-      if (filter === 'all') {
-        q = query(collection(db, 'bookings'), orderBy('date', 'desc'));
-      } else {
-        q = query(
-          collection(db, 'bookings'),
-          where('status', '==', filter),
-          orderBy('date', 'desc')
-        );
-      }
+      const q = query(collection(db, 'bookings'));
       const [bookingsSnap, courtsData] = await Promise.all([
         getDocs(q),
         getAllCourts(),
       ]);
 
-      setBookings(bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      let allBookings = bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      allBookings.sort((a, b) => {
+        const dateDiff = (b.date || '').localeCompare(a.date || '');
+        if (dateDiff !== 0) return dateDiff;
+        return (b.startTime || '').localeCompare(a.startTime || '');
+      });
+
+      if (filter !== 'all') {
+        allBookings = allBookings.filter((b) => b.status === filter);
+      }
+
+      setBookings(allBookings);
       setCourts(courtsData);
       if (courtsData.length > 0) {
         setSelectedCourtId(courtsData[0].id);
@@ -125,6 +132,28 @@ const AllBookingsPage = () => {
     }
   };
 
+  const handleConfirmCompleted = async (booking) => {
+    if (
+      !window.confirm(
+        `Konfirmasi bahwa sesi latihan bersama Coach ${booking.coachName || ''} telah selesai dilaksanakan?`
+      )
+    )
+      return;
+    setError('');
+    try {
+      const adminId = userProfile?.uid || currentUser?.uid || null;
+      await confirmBookingCompletedByAdmin(booking.id, adminId);
+      setSuccess(
+        `Sesi latihan Coach ${booking.coachName || ''} berhasil dikonfirmasi selesai! Status pelatih siap untuk jadwal berikutnya.`
+      );
+      await fetchBookingsAndCourts();
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      console.error('Gagal mengonfirmasi sesi selesai:', err);
+      setError(err?.message || 'Gagal mengonfirmasi sesi selesai.');
+    }
+  };
+
   // Filter unassigned / assigned
   const displayedBookings = bookings.filter((b) => {
     if (courtFilter === 'unassigned') return !b.courtId || b.courtStatus === 'unassigned';
@@ -133,6 +162,9 @@ const AllBookingsPage = () => {
   });
 
   const unassignedCount = bookings.filter((b) => !b.courtId || b.courtStatus === 'unassigned').length;
+  const pendingReportCount = bookings.filter(
+    (b) => b.status === BOOKING_STATUS.COMPLETED_BY_COACH
+  ).length;
 
   if (loading) {
     return (
@@ -161,6 +193,25 @@ const AllBookingsPage = () => {
       {success && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm font-medium">
           {success}
+        </div>
+      )}
+
+      {/* Pending Coach Completion Report Banner */}
+      {pendingReportCount > 0 && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-sm flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <HiCheckCircle className="w-5 h-5 text-emerald-700 shrink-0" />
+            <span>
+              Terdapat <strong>{pendingReportCount} sesi latihan</strong> yang dilaporkan selesai oleh
+              coach dan siap melatih kembali.
+            </span>
+          </div>
+          <button
+            onClick={() => setFilter(BOOKING_STATUS.COMPLETED_BY_COACH)}
+            className="px-3.5 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+          >
+            Tinjau & Konfirmasi ({pendingReportCount})
+          </button>
         </div>
       )}
 
@@ -223,7 +274,9 @@ const AllBookingsPage = () => {
             className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none"
           >
             <option value="all">Semua Status</option>
-            <option value={BOOKING_STATUS.CONFIRMED}>Aktif</option>
+            <option value={BOOKING_STATUS.CONFIRMED}>Aktif / Terjadwal</option>
+            <option value={BOOKING_STATUS.COMPLETED_BY_COACH}>Laporan Selesai (Perlu Konfirmasi)</option>
+            <option value={BOOKING_STATUS.COMPLETED}>Selesai Terverifikasi</option>
             <option value={BOOKING_STATUS.CANCELLED}>Dibatalkan</option>
           </select>
         </div>
@@ -298,9 +351,22 @@ const AllBookingsPage = () => {
                     </div>
                   </div>
 
-                  {/* Aksi Admin: Tentukan Lapangan & Batal */}
-                  <div className="flex items-center gap-2 border-t lg:border-t-0 pt-3 lg:pt-0">
+                  {/* Aksi Admin: Tentukan Lapangan, Konfirmasi Selesai & Batal */}
+                  <div className="flex flex-wrap items-center gap-2 border-t lg:border-t-0 pt-3 lg:pt-0">
                     <StatusChip status={booking.status} />
+
+                    {/* Jika Coach lapor selesai, tampilkan tombol Konfirmasi Selesai untuk Admin */}
+                    {booking.status === BOOKING_STATUS.COMPLETED_BY_COACH && (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        icon={HiCheckCircle}
+                        onClick={() => handleConfirmCompleted(booking)}
+                        className="!bg-emerald-800 hover:!bg-emerald-900 text-white shadow-xs"
+                      >
+                        Konfirmasi Selesai
+                      </Button>
+                    )}
 
                     {booking.status === BOOKING_STATUS.CONFIRMED && (
                       <Button
@@ -314,7 +380,8 @@ const AllBookingsPage = () => {
                       </Button>
                     )}
 
-                    {booking.status === BOOKING_STATUS.CONFIRMED && (
+                    {(booking.status === BOOKING_STATUS.CONFIRMED ||
+                      booking.status === BOOKING_STATUS.COMPLETED_BY_COACH) && (
                       <Button
                         variant="danger"
                         size="sm"
@@ -327,9 +394,22 @@ const AllBookingsPage = () => {
                   </div>
                 </div>
 
+                {/* Catatan Pelatih / Evaluasi Murid jika ada */}
+                {booking.coachNotes && (
+                  <div className="mt-3 pt-2.5 border-t border-emerald-100 bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 text-xs text-emerald-950 flex items-start gap-2">
+                    <HiCheckCircle className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-[10px] uppercase tracking-wider text-emerald-800 block">
+                        Laporan Selesai dari Coach {booking.coachName}:
+                      </span>
+                      <p className="mt-0.5 leading-relaxed">{booking.coachNotes}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Catatan Sesi Latihan jika ada */}
                 {booking.notes && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 flex items-start gap-1.5">
+                  <div className="mt-2.5 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-start gap-1.5">
                     <span className="font-semibold text-gray-700">Fokus Latihan:</span>
                     <span>{booking.notes}</span>
                   </div>

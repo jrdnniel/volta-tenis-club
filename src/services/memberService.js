@@ -20,11 +20,11 @@ const COLLECTION = 'users';
 export const getAllMembers = async () => {
   const q = query(
     collection(db, COLLECTION),
-    where('role', '==', ROLES.MEMBER),
-    orderBy('displayName')
+    where('role', '==', ROLES.MEMBER)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
+  const members = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
+  return members.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
 };
 
 // Get all coaches

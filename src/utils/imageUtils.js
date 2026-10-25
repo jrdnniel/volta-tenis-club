@@ -79,22 +79,30 @@ export const cropAndCompressImage = (file, maxDimension = 320, quality = 0.85) =
 export const uploadProfilePhoto = async (uid, file) => {
   if (!uid) throw new Error('ID Pengguna tidak valid.');
 
-  // 1. Kompres dan potong gambar ke bentuk persegi
-  const compressedDataUrl = await cropAndCompressImage(file, 320, 0.85);
+  // 1. Kompres dan potong gambar ke bentuk persegi (256x256, kualitas 0.78, ukuran super ringan ~12-18KB)
+  const compressedDataUrl = await cropAndCompressImage(file, 256, 0.78);
 
-  // 2. Coba unggah ke Firebase Storage
+  // 2. Coba unggah ke Firebase Storage dengan batas timeout 2 detik.
+  // Jika Storage bucket tidak terhubung, CORS, atau dinonaktifkan, langsung fallback ke data URL
+  // sehingga pengguna tidak macet / hang bermenit-menit!
   try {
     const storageRef = ref(storage, `avatars/${uid}.jpg`);
-    await uploadString(storageRef, compressedDataUrl, 'data_url');
-    const downloadURL = await getDownloadURL(storageRef);
+    const uploadPromise = uploadString(storageRef, compressedDataUrl, 'data_url').then(() =>
+      getDownloadURL(storageRef)
+    );
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Firebase Storage timeout')), 2000)
+    );
+
+    const downloadURL = await Promise.race([uploadPromise, timeoutPromise]);
     return downloadURL;
   } catch (storageError) {
-    // Jika Firebase Storage belum diaktifkan atau aturan permission dibatasi,
-    // fallback secara mulus ke data URL yang telah dikompresi (~25KB)
     console.warn(
-      'Firebase Storage tidak dapat diakses atau belum diaktifkan. Menyimpan foto langsung via database Firestore:',
+      'Firebase Storage tidak dapat diakses atau timeout. Menyimpan foto langsung via database Firestore:',
       storageError.message || storageError
     );
+    // Kembalikan data URL langsung (hanya ~15KB, tersimpan aman di dokumen pengguna Firestore)
     return compressedDataUrl;
   }
 };

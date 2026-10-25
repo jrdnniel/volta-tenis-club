@@ -61,16 +61,20 @@ export const getAllApplications = async () => {
 export const getApplicationsByStatus = async (status) => {
   const q = query(
     collection(db, APPLICATION_COLLECTION),
-    where('status', '==', status),
-    orderBy('createdAt', 'desc')
+    where('status', '==', status)
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({
+  const data = snapshot.docs.map((d) => ({
     id: d.id,
     ...d.data(),
     createdAt: d.data().createdAt?.toDate?.() || null,
   }));
+  return data.sort((a, b) => {
+    const timeA = a.createdAt?.getTime?.() || 0;
+    const timeB = b.createdAt?.getTime?.() || 0;
+    return timeB - timeA;
+  });
 };
 
 /**

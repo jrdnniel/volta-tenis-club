@@ -63,16 +63,16 @@ const CoachApplyPage = () => {
     <div className="min-h-screen flex flex-col lg:flex-row bg-[#FAF8F5] text-slate-800 antialiased font-sans selection:bg-emerald-100 selection:text-emerald-900">
       {/* Left Column */}
       <div className="lg:w-1/2 bg-[#FAF8F5] p-8 sm:p-12 lg:p-16 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#ECE7DE] relative overflow-hidden min-h-[480px] lg:min-h-screen">
-        <div className="relative z-10">
+        <div className="relative z-10 shrink-0">
           <Link to="/" className="inline-flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-emerald-800 text-white rounded-xl flex items-center justify-center font-extrabold text-base shadow-sm group-hover:scale-105 transition-transform">
-              V
+            <div className="w-10 h-10 bg-[#163D2B] rounded-xl flex items-center justify-center shadow-md shadow-emerald-950/20 group-hover:scale-105 transition-transform duration-200">
+              <span className="text-emerald-200 font-black text-lg tracking-tighter">V</span>
             </div>
-            <div>
-              <span className="font-extrabold text-slate-900 text-lg tracking-tight block leading-tight">
-                Volta <span className="text-emerald-700">Tenis</span>
+            <div className="leading-none text-left">
+              <span className="font-black text-slate-900 text-lg tracking-tight block">
+                Volta <span className="text-emerald-800 font-extrabold">Tenis</span>
               </span>
-              <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase block">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 block">
                 Karir & Rekrutmen Pelatih
               </span>
             </div>

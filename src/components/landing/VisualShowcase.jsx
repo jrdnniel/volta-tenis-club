@@ -122,7 +122,7 @@ export default function VisualShowcase() {
           Tinggi kokoh, tanpa horizontal scroll, pemanja mata
           ======================================================== */}
       <div
-        className="reveal-scale relative rounded-3xl overflow-hidden shadow-2xl border border-stone-800/30 bg-slate-950 text-white min-h-[580px] lg:h-[530px] flex flex-col justify-between select-none"
+        className="reveal-scale relative rounded-3xl overflow-hidden shadow-2xl bg-slate-950 text-white min-h-[580px] lg:h-[530px] flex flex-col justify-between select-none"
         onMouseEnter={() => setIsPlaying(false)}
         onMouseLeave={() => setIsPlaying(true)}
       >
@@ -138,10 +138,6 @@ export default function VisualShowcase() {
           <div
             className={`absolute inset-0 bg-gradient-to-r ${current.themeGradient} opacity-90 transition-all duration-700`}
           />
-          {/* Subtle Tennis Court Line Accent */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="w-full h-full border-4 border-white m-6 rounded-2xl" />
-          </div>
         </div>
 
         {/* Layer 1: Header Atas Kartu */}

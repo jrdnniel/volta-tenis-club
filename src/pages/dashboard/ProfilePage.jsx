@@ -21,7 +21,7 @@ import {
 } from 'react-icons/hi2';
 
 const ProfilePage = () => {
-  const { userProfile, updateProfilePhoto, updateProfileDetails } = useAuth();
+  const { userProfile, currentUser, updateProfilePhoto, updateProfileDetails } = useAuth();
   const fileInputRef = useRef(null);
 
   // State Form Edit Profil
@@ -60,20 +60,26 @@ const ProfilePage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const uid = userProfile?.uid || currentUser?.uid;
+    if (!uid) {
+      setPhotoErrorMsg('Sesi akun tidak valid. Silakan muat ulang halaman.');
+      return;
+    }
+
     // Reset pesan sebelumnya
     setPhotoSuccessMsg('');
     setPhotoErrorMsg('');
     setPhotoUploading(true);
 
     try {
-      // 1. Unggah foto via Firebase Storage (dengan fallback otomatis ke Firestore Data URL)
-      const photoURL = await uploadProfilePhoto(userProfile.uid, file);
+      // 1. Unggah foto via Firebase Storage (dengan fallback otomatis cepat ke Firestore Data URL)
+      const photoURL = await uploadProfilePhoto(uid, file);
 
-      // 2. Simpan permanen ke database Firestore users/{uid} & Firebase Auth
+      // 2. Simpan permanen ke database Firestore users/{uid}
       await updateProfilePhoto(photoURL);
 
-      setPhotoSuccessMsg('Foto profil berhasil diperbarui dan tersimpan permanen di database!');
-      setTimeout(() => setPhotoSuccessMsg(''), 6000);
+      setPhotoSuccessMsg('Foto profil berhasil diperbarui!');
+      setTimeout(() => setPhotoSuccessMsg(''), 5000);
     } catch (err) {
       console.error('Error saat memperbarui foto profil:', err);
       setPhotoErrorMsg(err.message || 'Gagal mengunggah foto profil. Silakan coba lagi.');

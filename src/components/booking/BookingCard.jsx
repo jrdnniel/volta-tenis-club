@@ -96,6 +96,16 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
                 Catatan: &ldquo;{booking.notes}&rdquo;
               </p>
             )}
+
+            {/* Evaluasi dari Pelatih jika Sesi telah Selesai */}
+            {booking.coachNotes && (
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-950 mt-1">
+                <span className="font-bold text-[10px] uppercase tracking-wider text-emerald-800 block">
+                  Evaluasi dari Coach {booking.coachName || 'Pelatih'}:
+                </span>
+                <p className="mt-0.5 leading-relaxed">{booking.coachNotes}</p>
+              </div>
+            )}
           </div>
         </div>
 

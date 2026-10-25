@@ -114,11 +114,15 @@ export const recordPayment = async (paymentData) => {
 export const getUserPayments = async (userId) => {
   const q = query(
     collection(db, PAYMENTS_COLLECTION),
-    where('userId', '==', userId),
-    orderBy('paidAt', 'desc')
+    where('userId', '==', userId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const payments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return payments.sort((a, b) => {
+    const timeA = a.paidAt?.seconds || 0;
+    const timeB = b.paidAt?.seconds || 0;
+    return timeB - timeA;
+  });
 };
 
 // Verify a payment (admin)
@@ -134,10 +138,14 @@ export const verifyPayment = async (paymentId, adminUid, status) => {
 export const getPendingPayments = async () => {
   const q = query(
     collection(db, PAYMENTS_COLLECTION),
-    where('verificationStatus', '==', 'pending'),
-    orderBy('paidAt', 'desc')
+    where('verificationStatus', '==', 'pending')
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const payments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return payments.sort((a, b) => {
+    const timeA = a.paidAt?.seconds || 0;
+    const timeB = b.paidAt?.seconds || 0;
+    return timeB - timeA;
+  });
 };
 

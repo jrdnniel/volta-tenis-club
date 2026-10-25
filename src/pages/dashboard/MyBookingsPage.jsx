@@ -17,14 +17,18 @@ const MyBookingsPage = () => {
   const [error, setError] = useState('');
 
   const fetchBookings = async () => {
-    if (!userProfile?.uid) return;
+    if (!userProfile?.uid) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setError('');
     try {
       const data = await getMyBookings(userProfile.uid);
       setBookings(data);
     } catch (err) {
       console.error('Error fetching bookings:', err);
-      setError('Gagal memuat data booking.');
+      setError(err?.message || 'Gagal memuat data booking.');
     } finally {
       setLoading(false);
     }
@@ -53,12 +57,22 @@ const MyBookingsPage = () => {
 
   const filteredBookings = bookings.filter((b) => {
     if (filter === 'confirmed') return b.status === BOOKING_STATUS.CONFIRMED;
+    if (filter === 'completed')
+      return (
+        b.status === BOOKING_STATUS.COMPLETED ||
+        b.status === BOOKING_STATUS.COMPLETED_BY_COACH
+      );
     if (filter === 'cancelled') return b.status === BOOKING_STATUS.CANCELLED;
     return true;
   });
 
   // Stats
   const confirmedCount = bookings.filter((b) => b.status === BOOKING_STATUS.CONFIRMED).length;
+  const completedCount = bookings.filter(
+    (b) =>
+      b.status === BOOKING_STATUS.COMPLETED ||
+      b.status === BOOKING_STATUS.COMPLETED_BY_COACH
+  ).length;
   const cancelledCount = bookings.filter((b) => b.status === BOOKING_STATUS.CANCELLED).length;
 
   if (loading) {
@@ -88,6 +102,10 @@ const MyBookingsPage = () => {
           <p className="text-lg font-bold text-emerald-700">{confirmedCount}</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 px-4 py-2.5 shadow-sm">
+          <span className="text-xs text-blue-600">Selesai</span>
+          <p className="text-lg font-bold text-blue-700">{completedCount}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 px-4 py-2.5 shadow-sm">
           <span className="text-xs text-gray-400">Dibatalkan</span>
           <p className="text-lg font-bold text-gray-400">{cancelledCount}</p>
         </div>
@@ -99,6 +117,7 @@ const MyBookingsPage = () => {
         {[
           { key: 'all', label: 'Semua' },
           { key: 'confirmed', label: 'Aktif' },
+          { key: 'completed', label: 'Selesai' },
           { key: 'cancelled', label: 'Dibatalkan' },
         ].map((f) => (
           <button

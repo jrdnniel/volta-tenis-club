@@ -130,31 +130,46 @@ export const AuthProvider = ({ children }) => {
 
   // Update foto profil (tersimpan di Firestore & Auth)
   const updateProfilePhoto = async (photoUrl) => {
-    if (!currentUser) throw new Error('Pengguna belum login.');
+    const uid = currentUser?.uid || userProfile?.uid;
+    if (!uid) throw new Error('Pengguna belum login.');
 
-    // 1. Sinkronisasi ke profil Firebase Auth
-    try {
-      await updateProfile(currentUser, { photoURL: photoUrl || '' });
-    } catch (authErr) {
-      console.warn('Peringatan saat sinkronisasi photoURL Firebase Auth:', authErr);
+    // 1. Sinkronisasi ke profil Firebase Auth jika URL adalah HTTP(S) eksternal
+    // (Firebase Auth membatasi string photoURL max 2048 karakter, jadi data URL base64 tidak perlu dikirim ke Auth)
+    if (currentUser && photoUrl && photoUrl.startsWith('http')) {
+      try {
+        await updateProfile(currentUser, { photoURL: photoUrl });
+      } catch (authErr) {
+        console.warn('Peringatan saat sinkronisasi photoURL Firebase Auth:', authErr);
+      }
     }
 
-    // 2. Simpan permanen ke dokumen Firestore users
-    const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, {
-      photoURL: photoUrl || '',
-      updatedAt: serverTimestamp(),
-    });
+    // 2. Simpan permanen ke dokumen Firestore users (menggunakan setDoc merge: true agar aman jika dokumen belum ada)
+    const userRef = doc(db, 'users', uid);
+    await setDoc(
+      userRef,
+      {
+        photoURL: photoUrl || '',
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
 
-    // 3. Muat ulang profil terbaru ke state aplikasi
-    return await fetchUserProfile(currentUser.uid);
+    // 3. Update state lokal segera agar avatar di Navbar & Profile langsung ter-render
+    setUserProfile((prev) => ({
+      ...prev,
+      photoURL: photoUrl || '',
+    }));
+
+    // 4. Muat ulang profil terbaru dari database
+    return await fetchUserProfile(uid);
   };
 
   // Update informasi teks profil pengguna (nama, no. hp, spesialisasi, dll)
   const updateProfileDetails = async (details) => {
-    if (!currentUser) throw new Error('Pengguna belum login.');
+    const uid = currentUser?.uid || userProfile?.uid;
+    if (!uid) throw new Error('Pengguna belum login.');
 
-    if (details.displayName && details.displayName !== currentUser.displayName) {
+    if (currentUser && details.displayName && details.displayName !== currentUser.displayName) {
       try {
         await updateProfile(currentUser, { displayName: details.displayName });
       } catch (authErr) {
@@ -162,13 +177,22 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, {
-      ...details,
-      updatedAt: serverTimestamp(),
-    });
+    const userRef = doc(db, 'users', uid);
+    await setDoc(
+      userRef,
+      {
+        ...details,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
 
-    return await fetchUserProfile(currentUser.uid);
+    setUserProfile((prev) => ({
+      ...prev,
+      ...details,
+    }));
+
+    return await fetchUserProfile(uid);
   };
 
   // Listen for auth state changes

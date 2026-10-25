@@ -24,6 +24,7 @@ import MembersPage from './pages/dashboard/MembersPage'
 import DuesPage from './pages/dashboard/DuesPage'
 import MyDuesPage from './pages/dashboard/MyDuesPage'
 import CoachSchedulePage from './pages/dashboard/CoachSchedulePage'
+import CoachSessionsPage from './pages/dashboard/CoachSessionsPage'
 import ProfilePage from './pages/dashboard/ProfilePage'
 import CourtsPage from './pages/dashboard/CourtsPage'
 import CoachesPage from './pages/dashboard/CoachesPage'
@@ -146,6 +147,14 @@ function App() {
         />
 
         {/* ---- ADMIN & COACH ---- */}
+        <Route
+          path="coach-sessions"
+          element={
+            <RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.COACH]}>
+              <CoachSessionsPage />
+            </RoleRoute>
+          }
+        />
         <Route
           path="coach-schedule"
           element={
