@@ -8,7 +8,7 @@ import {
   signInWithPopup,
   updateProfile,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { ROLES } from '../utils/constants';
 
@@ -43,12 +43,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register with email/password
-  const register = async (email, password, displayName, phone) => {
+  // Register with email/password (supports both positional args and object payload)
+  const register = async (emailOrData, passwordArg, displayNameArg, phoneArg) => {
+    let email, password, displayName, phone, role;
+    if (typeof emailOrData === 'object' && emailOrData !== null) {
+      email = emailOrData.email;
+      password = emailOrData.password;
+      displayName = emailOrData.name || emailOrData.displayName || '';
+      phone = emailOrData.phone || '';
+      role = emailOrData.role || ROLES.MEMBER;
+    } else {
+      email = emailOrData;
+      password = passwordArg;
+      displayName = displayNameArg || '';
+      phone = phoneArg || '';
+      role = ROLES.MEMBER;
+    }
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    await updateProfile(user, { displayName });
+    if (displayName) {
+      await updateProfile(user, { displayName });
+    }
 
     // Create user document in Firestore
     await setDoc(doc(db, 'users', user.uid), {
@@ -57,10 +74,10 @@ export const AuthProvider = ({ children }) => {
       phone: phone || '',
       address: '',
       photoURL: '',
-      role: ROLES.MEMBER, // Default role — member biasa
+      role: role || ROLES.MEMBER,
       joinDate: serverTimestamp(),
       isActive: true,
-      membershipType: 'basic',
+      membershipType: role === ROLES.ADMIN ? 'admin' : (role === ROLES.COACH ? 'coach' : 'basic'),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -111,6 +128,49 @@ export const AuthProvider = ({ children }) => {
     setUserProfile(null);
   };
 
+  // Update foto profil (tersimpan di Firestore & Auth)
+  const updateProfilePhoto = async (photoUrl) => {
+    if (!currentUser) throw new Error('Pengguna belum login.');
+
+    // 1. Sinkronisasi ke profil Firebase Auth
+    try {
+      await updateProfile(currentUser, { photoURL: photoUrl || '' });
+    } catch (authErr) {
+      console.warn('Peringatan saat sinkronisasi photoURL Firebase Auth:', authErr);
+    }
+
+    // 2. Simpan permanen ke dokumen Firestore users
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, {
+      photoURL: photoUrl || '',
+      updatedAt: serverTimestamp(),
+    });
+
+    // 3. Muat ulang profil terbaru ke state aplikasi
+    return await fetchUserProfile(currentUser.uid);
+  };
+
+  // Update informasi teks profil pengguna (nama, no. hp, spesialisasi, dll)
+  const updateProfileDetails = async (details) => {
+    if (!currentUser) throw new Error('Pengguna belum login.');
+
+    if (details.displayName && details.displayName !== currentUser.displayName) {
+      try {
+        await updateProfile(currentUser, { displayName: details.displayName });
+      } catch (authErr) {
+        console.warn('Peringatan saat sinkronisasi displayName Firebase Auth:', authErr);
+      }
+    }
+
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, {
+      ...details,
+      updatedAt: serverTimestamp(),
+    });
+
+    return await fetchUserProfile(currentUser.uid);
+  };
+
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -135,6 +195,8 @@ export const AuthProvider = ({ children }) => {
     loginWithGoogle,
     logout,
     fetchUserProfile,
+    updateProfilePhoto,
+    updateProfileDetails,
     isAdmin: userProfile?.role === ROLES.ADMIN,
     isCoach: userProfile?.role === ROLES.COACH,
     isMember: userProfile?.role === ROLES.MEMBER,

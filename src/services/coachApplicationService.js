@@ -86,3 +86,9 @@ export const updateApplicationStatus = async (applicationId, status, reviewedByU
   });
 };
 
+// Aliases for compatibility
+export const submitApplication = submitCoachApplication;
+export const createCoachApplication = submitCoachApplication;
+export const applyAsCoach = submitCoachApplication;
+
+

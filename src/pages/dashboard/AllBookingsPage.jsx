@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import { BOOKING_STATUS } from '../../utils/constants';
-import { cancelBooking } from '../../services/bookingService';
-import { formatCurrency } from '../../utils/formatters';
+import { cancelBooking, getAllCourts, assignCourtToBooking } from '../../services/bookingService';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Spinner from '../../components/common/Spinner';
 import StatusChip from '../../components/common/StatusChip';
+import Modal from '../../components/common/Modal';
 import {
   HiCalendarDays,
   HiClock,
@@ -17,18 +18,30 @@ import {
   HiAcademicCap,
   HiXCircle,
   HiFunnel,
+  HiCheckCircle,
+  HiPencilSquare,
 } from 'react-icons/hi2';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 
 const AllBookingsPage = () => {
+  const { currentUser } = useAuth();
   const [bookings, setBookings] = useState([]);
+  const [courts, setCourts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, confirmed, cancelled
+  const [courtFilter, setCourtFilter] = useState('all'); // all, unassigned, assigned
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const fetchBookings = async () => {
+  // Modal Penugasan Lapangan
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedCourtId, setSelectedCourtId] = useState('');
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignError, setAssignError] = useState('');
+
+  const fetchBookingsAndCourts = async () => {
     setLoading(true);
     try {
       let q;
@@ -41,34 +54,85 @@ const AllBookingsPage = () => {
           orderBy('date', 'desc')
         );
       }
-      const snapshot = await getDocs(q);
-      setBookings(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      const [bookingsSnap, courtsData] = await Promise.all([
+        getDocs(q),
+        getAllCourts(),
+      ]);
+
+      setBookings(bookingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setCourts(courtsData);
+      if (courtsData.length > 0) {
+        setSelectedCourtId(courtsData[0].id);
+      }
     } catch (err) {
       console.error('Error fetching bookings:', err);
-      setError('Gagal memuat data booking. Pastikan index Firestore sudah dibuat.');
+      setError('Gagal memuat data sesi latihan.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBookings();
+    fetchBookingsAndCourts();
   }, [filter]);
 
-  const handleCancel = async (booking) => {
-    if (!window.confirm(`Batalkan booking ${booking.courtName} oleh ${booking.userName}?`)) return;
+  const handleOpenAssignModal = (booking) => {
+    setSelectedBooking(booking);
+    setSelectedCourtId(booking.courtId || (courts[0]?.id || ''));
+    setAssignError('');
+    setAssignModalOpen(true);
+  };
+
+  const handleSaveCourtAssignment = async () => {
+    if (!selectedBooking || !selectedCourtId) return;
+
+    const courtObj = courts.find((c) => c.id === selectedCourtId);
+    if (!courtObj) return;
+
+    setAssignLoading(true);
+    setAssignError('');
     try {
-      await cancelBooking(booking.id);
-      setSuccess('Booking berhasil dibatalkan.');
-      await fetchBookings();
+      await assignCourtToBooking(
+        selectedBooking.id,
+        courtObj.id,
+        courtObj.name,
+        selectedBooking.date,
+        selectedBooking.startTime,
+        selectedBooking.endTime,
+        currentUser?.uid
+      );
+
+      setSuccess(`Lapangan "${courtObj.name}" berhasil ditugaskan untuk sesi latihan ini.`);
+      setAssignModalOpen(false);
+      await fetchBookingsAndCourts();
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
-      setError('Gagal membatalkan booking.');
+      setAssignError(err.message || 'Gagal menugaskan lapangan.');
+    } finally {
+      setAssignLoading(false);
     }
   };
 
-  const confirmedCount = bookings.filter((b) => b.status === BOOKING_STATUS.CONFIRMED).length;
-  const cancelledCount = bookings.filter((b) => b.status === BOOKING_STATUS.CANCELLED).length;
+  const handleCancel = async (booking) => {
+    if (!window.confirm(`Batalkan sesi latihan ${booking.userName} bersama ${booking.coachName}?`)) return;
+    try {
+      await cancelBooking(booking.id);
+      setSuccess('Sesi latihan berhasil dibatalkan.');
+      await fetchBookingsAndCourts();
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      setError('Gagal membatalkan sesi latihan.');
+    }
+  };
+
+  // Filter unassigned / assigned
+  const displayedBookings = bookings.filter((b) => {
+    if (courtFilter === 'unassigned') return !b.courtId || b.courtStatus === 'unassigned';
+    if (courtFilter === 'assigned') return b.courtId && b.courtStatus === 'assigned';
+    return true;
+  });
+
+  const unassignedCount = bookings.filter((b) => !b.courtId || b.courtStatus === 'unassigned').length;
 
   if (loading) {
     return (
@@ -82,8 +146,10 @@ const AllBookingsPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Semua Booking</h1>
-        <p className="text-gray-500 mt-1">Lihat dan kelola semua reservasi lapangan.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Semua Sesi Pelatihan</h1>
+        <p className="text-gray-500 mt-1">
+          Kelola pesanan sesi latihan dan tentukan penugasan lapangan (court) untuk setiap sesi.
+        </p>
       </div>
 
       {/* Alerts */}
@@ -93,23 +159,60 @@ const AllBookingsPage = () => {
         </div>
       )}
       {success && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm font-medium">
           {success}
         </div>
       )}
 
-      {/* Stats & Filter */}
+      {/* Unassigned Warning Banner */}
+      {unassignedCount > 0 && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-bold">Perhatian:</span>
+            <span>Terdapat <strong>{unassignedCount} sesi latihan</strong> yang belum ditentukan lapangannya oleh Admin.</span>
+          </div>
+          <button
+            onClick={() => setCourtFilter('unassigned')}
+            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold"
+          >
+            Filter Belum Ditentukan
+          </button>
+        </div>
+      )}
+
+      {/* Stats & Filter Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex gap-3 text-sm">
-          <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-semibold">
-            Total: {bookings.length}
-          </span>
-          <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-semibold">
-            Aktif: {confirmedCount}
-          </span>
-          <span className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg font-semibold">
-            Batal: {cancelledCount}
-          </span>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <button
+            onClick={() => setCourtFilter('all')}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              courtFilter === 'all'
+                ? 'bg-slate-800 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Semua ({bookings.length})
+          </button>
+          <button
+            onClick={() => setCourtFilter('unassigned')}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              courtFilter === 'unassigned'
+                ? 'bg-amber-500 text-white'
+                : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            Butuh Penugasan ({unassignedCount})
+          </button>
+          <button
+            onClick={() => setCourtFilter('assigned')}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              courtFilter === 'assigned'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            Sudah Ditugaskan ({bookings.length - unassignedCount})
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -117,7 +220,7 @@ const AllBookingsPage = () => {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-court-500"
+            className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none"
           >
             <option value="all">Semua Status</option>
             <option value={BOOKING_STATUS.CONFIRMED}>Aktif</option>
@@ -127,73 +230,182 @@ const AllBookingsPage = () => {
       </div>
 
       {/* Booking List */}
-      {bookings.length === 0 ? (
+      {displayedBookings.length === 0 ? (
         <Card className="!p-12 text-center">
           <HiCalendarDays className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Booking</h3>
-          <p className="text-gray-500 text-sm">Belum ada member yang melakukan reservasi.</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Sesi Latihan</h3>
+          <p className="text-gray-500 text-sm">Tidak ditemukan sesi latihan sesuai filter yang dipilih.</p>
         </Card>
       ) : (
         <div className="space-y-3">
-          {bookings.map((booking) => (
-            <Card key={booking.id} className="!p-4 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* Info */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <HiMapPin className="w-4 h-4 text-court-600 flex-shrink-0" />
+          {displayedBookings.map((booking) => {
+            const hasCourt = Boolean(booking.courtId && booking.courtStatus === 'assigned');
+
+            return (
+              <Card key={booking.id} className="!p-4 sm:!p-5 hover:shadow-md transition-shadow">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* Info Sesi */}
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    {/* Tanggal & Jam */}
                     <div>
-                      <p className="font-semibold text-gray-900">{booking.courtName}</p>
-                      <p className="text-xs text-gray-400">{booking.date}</p>
+                      <div className="flex items-center gap-1.5 text-gray-900 font-bold">
+                        <HiCalendarDays className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                        <span>{booking.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+                        <HiClock className="w-3.5 h-3.5" />
+                        <span>{booking.startTime} — {booking.endTime}</span>
+                      </div>
+                    </div>
+
+                    {/* Member */}
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Member</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <HiUser className="w-4 h-4 text-gray-400" />
+                        <span className="font-semibold text-gray-800 truncate">{booking.userName}</span>
+                      </div>
+                      {booking.userPhone && (
+                        <p className="text-xs text-gray-400 mt-0.5">{booking.userPhone}</p>
+                      )}
+                    </div>
+
+                    {/* Coach */}
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Pelatih</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <HiAcademicCap className="w-4 h-4 text-emerald-700" />
+                        <span className="font-semibold text-emerald-900 truncate">
+                          {booking.coachName || 'Belum dipilih'}
+                        </span>
+                      </div>
+                      {(booking.packageName || booking.trainingLevel) && (
+                        <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded">
+                          {booking.packageName || booking.trainingLevel}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Lapangan Ditugaskan */}
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Lapangan</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <HiMapPin className={`w-4 h-4 ${hasCourt ? 'text-emerald-700' : 'text-amber-500'}`} />
+                        <span className={`text-xs font-bold ${hasCourt ? 'text-emerald-800' : 'text-amber-600'}`}>
+                          {hasCourt ? booking.courtName : 'Belum Ditentukan'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <HiClock className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                    <span className="text-gray-700">
-                      {booking.startTime} — {booking.endTime}
-                    </span>
-                  </div>
+                  {/* Aksi Admin: Tentukan Lapangan & Batal */}
+                  <div className="flex items-center gap-2 border-t lg:border-t-0 pt-3 lg:pt-0">
+                    <StatusChip status={booking.status} />
 
-                  <div className="flex items-center gap-2">
-                    <HiUser className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-gray-700 truncate">{booking.userName}</span>
-                  </div>
+                    {booking.status === BOOKING_STATUS.CONFIRMED && (
+                      <Button
+                        size="sm"
+                        variant={hasCourt ? 'secondary' : 'primary'}
+                        icon={HiPencilSquare}
+                        onClick={() => handleOpenAssignModal(booking)}
+                        className={!hasCourt ? '!bg-amber-600 hover:!bg-amber-700 text-white' : ''}
+                      >
+                        {hasCourt ? 'Ganti Lapangan' : 'Tentukan Lapangan'}
+                      </Button>
+                    )}
 
-                  <div className="flex items-center gap-2">
-                    {booking.coachName ? (
-                      <>
-                        <HiAcademicCap className="w-4 h-4 text-court-600 flex-shrink-0" />
-                        <span className="text-gray-700 truncate">{booking.coachName}</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-400 text-xs">Tanpa pelatih</span>
+                    {booking.status === BOOKING_STATUS.CONFIRMED && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={HiXCircle}
+                        onClick={() => handleCancel(booking)}
+                      >
+                        Batal
+                      </Button>
                     )}
                   </div>
                 </div>
 
-                {/* Status + Action */}
-                <div className="flex items-center gap-3">
-                  <StatusChip status={booking.status} />
-                  {booking.status === BOOKING_STATUS.CONFIRMED && (
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      icon={HiXCircle}
-                      onClick={() => handleCancel(booking)}
-                    >
-                      Batalkan
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
+                {/* Catatan Sesi Latihan jika ada */}
+                {booking.notes && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 flex items-start gap-1.5">
+                    <span className="font-semibold text-gray-700">Fokus Latihan:</span>
+                    <span>{booking.notes}</span>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
+      )}
+
+      {/* MODAL PENUGASAN LAPANGAN OLEH ADMIN */}
+      {assignModalOpen && selectedBooking && (
+        <Modal
+          isOpen={assignModalOpen}
+          onClose={() => setAssignModalOpen(false)}
+          title="Tentukan Lapangan Latihan"
+        >
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1.5 text-slate-700">
+              <p><strong>Member:</strong> {selectedBooking.userName}</p>
+              <p><strong>Pelatih:</strong> {selectedBooking.coachName}</p>
+              <p><strong>Waktu:</strong> {selectedBooking.date} ({selectedBooking.startTime} — {selectedBooking.endTime})</p>
+            </div>
+
+            {assignError && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+                {assignError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Pilih Lapangan untuk Sesi Ini:
+              </label>
+              {courts.length === 0 ? (
+                <p className="text-xs text-red-500">
+                  Belum ada data lapangan yang aktif. Silakan tambahkan lapangan di menu Kelola Lapangan terlebih dahulu.
+                </p>
+              ) : (
+                <select
+                  value={selectedCourtId}
+                  onChange={(e) => setSelectedCourtId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 focus:outline-none focus:border-emerald-700"
+                >
+                  {courts.map((court) => (
+                    <option key={court.id} value={court.id}>
+                      {court.name} ({court.surface || 'Hard Court'})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end pt-3">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setAssignModalOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                loading={assignLoading}
+                onClick={handleSaveCourtAssignment}
+                className="bg-emerald-800 hover:bg-emerald-900"
+              >
+                Simpan Penugasan Lapangan
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
 };
 
 export default AllBookingsPage;
-

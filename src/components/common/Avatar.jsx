@@ -5,6 +5,8 @@ const sizes = {
   md: 'w-10 h-10 text-sm',
   lg: 'w-14 h-14 text-lg',
   xl: 'w-20 h-20 text-2xl',
+  '2xl': 'w-28 h-28 text-3xl',
+  '3xl': 'w-32 h-32 text-4xl',
 };
 
 const Avatar = ({ src, name, size = 'md', className = '' }) => {

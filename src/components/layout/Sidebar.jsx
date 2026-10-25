@@ -14,9 +14,11 @@ import {
   HiChartBarSquare,
   HiLink,
   HiDocumentText,
+  HiSparkles,
 } from 'react-icons/hi2';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../utils/constants';
+import Avatar from '../common/Avatar';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { userProfile } = useAuth();
@@ -44,9 +46,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
-      title: 'Jadwal & Booking',
+      title: 'Jadwal & Pelatihan',
       items: [
-        { label: 'Semua Booking', icon: HiCalendarDays, path: '/dashboard/all-bookings' },
+        { label: 'Semua Sesi Latihan', icon: HiCalendarDays, path: '/dashboard/all-bookings' },
+        { label: 'Rate Card Resmi', icon: HiDocumentText, path: '/dashboard/rate-card' },
+        { label: 'Paket Pelatihan', icon: HiSparkles, path: '/dashboard/packages' },
         { label: 'Jadwal Coach', icon: HiClock, path: '/dashboard/coach-schedule' },
       ],
     },
@@ -72,11 +76,9 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
-      title: 'Jadwal & Booking',
+      title: 'Pelatihan',
       items: [
-        { label: 'Booking Lapangan', icon: HiCalendarDays, path: '/dashboard/booking' },
-        { label: 'Booking Saya', icon: HiClipboardDocumentList, path: '/dashboard/my-bookings' },
-        { label: 'Jadwal Saya', icon: HiClock, path: '/dashboard/coach-schedule' },
+        { label: 'Jadwal Mengajar Saya', icon: HiClock, path: '/dashboard/coach-schedule' },
       ],
     },
     {
@@ -101,10 +103,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
-      title: 'Booking',
+      title: 'Pelatihan',
       items: [
-        { label: 'Booking Lapangan', icon: HiCalendarDays, path: '/dashboard/booking' },
-        { label: 'Booking Saya', icon: HiClipboardDocumentList, path: '/dashboard/my-bookings' },
+        { label: 'Daftar Pelatih', icon: HiAcademicCap, path: '/dashboard/coaches-list' },
+        { label: 'Rate Card Resmi', icon: HiDocumentText, path: '/dashboard/rate-card' },
+        { label: 'Pesan Sesi Latihan', icon: HiCalendarDays, path: '/dashboard/booking' },
+        { label: 'Sesi Latihan Saya', icon: HiClipboardDocumentList, path: '/dashboard/my-bookings' },
       ],
     },
     {
@@ -171,19 +175,29 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Role Badge */}
-        <div className="px-5 pt-5 pb-2 lg:pt-6">
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest ${currentRoleConfig.color} ${currentRoleConfig.textColor}`}>
-              {currentRoleConfig.label}
+        {/* User Profile Card */}
+        <div className="px-5 pt-5 pb-3 lg:pt-6 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={userProfile?.photoURL}
+              name={userProfile?.displayName}
+              size="md"
+              className="flex-shrink-0 ring-2 ring-emerald-600/20 shadow-xs"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${currentRoleConfig.color} ${currentRoleConfig.textColor}`}>
+                  {currentRoleConfig.label}
+                </span>
+              </div>
+              <p className="text-sm font-bold text-slate-800 truncate leading-tight">
+                {userProfile?.displayName || 'User'}
+              </p>
+              <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                {userProfile?.email}
+              </p>
             </div>
           </div>
-          <p className="text-sm font-semibold text-slate-800 truncate">
-            {userProfile?.displayName || 'User'}
-          </p>
-          <p className="text-[11px] text-slate-400 truncate">
-            {userProfile?.email}
-          </p>
         </div>
 
         {/* Menu Sections */}

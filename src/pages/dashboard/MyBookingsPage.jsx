@@ -73,8 +73,8 @@ const MyBookingsPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Booking Saya</h1>
-        <p className="text-gray-500 mt-1">Riwayat dan status booking lapangan Anda.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Sesi Latihan Saya</h1>
+        <p className="text-gray-500 mt-1">Riwayat dan status pemesanan sesi latihan Anda bersama pelatih.</p>
       </div>
 
       {/* Stats Bar */}

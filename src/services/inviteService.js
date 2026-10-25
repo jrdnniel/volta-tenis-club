@@ -82,13 +82,35 @@ export const validateInviteToken = async (code) => {
  * @param {string} tokenId - Firestore doc ID
  * @param {string} usedByUid - UID of user who used this token
  */
-export const markTokenUsed = async (tokenId, usedByUid) => {
+export const markTokenUsed = async (tokenId, usedByUid = null) => {
   await updateDoc(doc(db, INVITE_COLLECTION, tokenId), {
     isUsed: true,
     usedBy: usedByUid,
     usedAt: serverTimestamp(),
   });
 };
+
+/**
+ * Alias for markTokenUsed. If passed a code instead of an ID, finds and marks the doc.
+ */
+export const markInviteUsed = async (tokenIdOrCode, usedByUid = null) => {
+  try {
+    await markTokenUsed(tokenIdOrCode, usedByUid);
+  } catch {
+    // If not a doc id, search by code
+    const q = query(
+      collection(db, INVITE_COLLECTION),
+      where('code', '==', tokenIdOrCode)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      await markTokenUsed(snapshot.docs[0].id, usedByUid);
+    }
+  }
+};
+
+export const verifyInvite = validateInviteToken;
+export const getInviteByToken = validateInviteToken;
 
 /**
  * Get all invite tokens created by a specific admin.

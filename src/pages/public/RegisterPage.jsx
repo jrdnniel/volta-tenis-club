@@ -1,164 +1,345 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
-import { HiEnvelope, HiLockClosed, HiUser, HiPhone, HiCheckCircle, HiArrowLeft } from 'react-icons/hi2';
-import { FcGoogle } from 'react-icons/fc';
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { ROLES } from '../../utils/constants'
+import {
+  HiArrowLeft,
+  HiArrowUpRight,
+  HiCheckCircle,
+  HiSparkles,
+} from 'react-icons/hi2'
+import { FcGoogle } from 'react-icons/fc'
 
 const RegisterPage = () => {
+  const navigate = useNavigate()
+  const { register, loginWithGoogle } = useAuth()
+
   const [formData, setFormData] = useState({
-    displayName: '',
+    name: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: '',
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { register, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-  };
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Password dan konfirmasi password tidak cocok.');
-    }
+    e.preventDefault()
+    setError('')
+
     if (formData.password.length < 6) {
-      return setError('Password minimal 6 karakter.');
+      return setError('Kata sandi minimal harus 6 karakter.')
     }
-    setLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      return setError('Konfirmasi kata sandi tidak cocok.')
+    }
+
+    setLoading(true)
     try {
-      await register(formData.email, formData.password, formData.displayName, formData.phone);
-      navigate('/dashboard', { replace: true });
+      await register({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: ROLES?.MEMBER || 'member',
+      })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       switch (err.code) {
         case 'auth/email-already-in-use':
-          setError('Email sudah terdaftar. Silakan gunakan email lain.');
-          break;
+          setError('Email sudah terdaftar. Silakan gunakan email lain atau langsung masuk.')
+          break
         case 'auth/weak-password':
-          setError('Password terlalu lemah. Minimal 6 karakter.');
-          break;
+          setError('Kata sandi terlalu lemah. Minimal 6 karakter.')
+          break
         default:
-          setError('Terjadi kesalahan. Silakan coba lagi.');
+          setError(err.message || 'Gagal melakukan pendaftaran. Silakan coba lagi.')
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleGoogleRegister = async () => {
-    setError('');
-    setLoading(true);
+    if (!loginWithGoogle) return
+    setError('')
+    setGoogleLoading(true)
     try {
-      await loginWithGoogle();
-      navigate('/dashboard', { replace: true });
+      await loginWithGoogle()
+      navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError('Gagal mendaftar dengan Google.');
+      setError('Gagal mendaftar dengan Google. Silakan coba lagi.')
     } finally {
-      setLoading(false);
+      setGoogleLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left: Decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12">
-        <div className="absolute inset-0 bg-gradient-to-br from-court-700 via-court-800 to-slate-900" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxLjUiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-60" />
+    <div className="h-screen overflow-hidden flex flex-col lg:flex-row bg-[#FAF8F5] text-slate-800 antialiased font-sans selection:bg-emerald-100 selection:text-emerald-900">
+      {/* ========================================================
+          KOLOM KIRI: BRANDING & HIGHLIGHT VOLTA TENIS CLUB
+          ======================================================== */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#FAF8F5] p-6 sm:p-8 xl:p-12 flex-col justify-between border-r border-[#ECE7DE] relative overflow-hidden h-full">
+        {/* Brand Logo */}
+        <div className="relative z-10 shrink-0">
+          <Link to="/" className="inline-flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-emerald-800 text-white rounded-xl flex items-center justify-center font-extrabold text-base shadow-sm group-hover:scale-105 transition-transform">
+              V
+            </div>
+            <div>
+              <span className="font-extrabold text-slate-900 text-lg tracking-tight block leading-tight">
+                Volta <span className="text-emerald-700">Tenis</span>
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase block">
+                Klub Pelatihan Tenis
+              </span>
+            </div>
+          </Link>
+        </div>
 
-        <div className="relative max-w-md text-white space-y-6">
-          <div className="w-16 h-16 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
-            <span className="text-3xl font-black">V</span>
+        {/* Ambient Ring Pattern */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/3 -translate-y-1/4 w-[480px] h-[480px] rounded-full border border-[#E5E0D5]/70" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/3 -translate-y-1/4 w-[340px] h-[340px] rounded-full border border-[#E5E0D5]/90" />
+
+        {/* Hero Copy & Highlight Card */}
+        <div className="relative z-10 max-w-md my-auto py-4">
+          <div className="inline-flex items-center gap-2 bg-[#EAE5D9]/70 rounded-full px-3 py-1 mb-4">
+            <HiSparkles className="w-3.5 h-3.5 text-emerald-800" />
+            <span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">
+              Komunitas & Latihan
+            </span>
           </div>
-          <h1 className="text-4xl font-black tracking-tight">Bergabunglah!</h1>
-          <p className="text-court-200 text-lg leading-relaxed">
-            Daftar sekarang dan nikmati fasilitas tenis terbaik.
-            Booking lapangan dan pilih pelatih profesional dengan mudah.
+
+          <h1 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-[1.18] mb-3">
+            Langkah awal<br />
+            menuju servis<br />
+            <span className="font-serif italic font-normal text-emerald-800">yang sempurna.</span>
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal mb-5 max-w-sm">
+            Daftar menjadi anggota resmi Volta Tenis Club. Nikmati fasilitas lapangan berstandar internasional dan komunitas olahraga yang suportif.
           </p>
-          <ul className="space-y-3">
-            {[
-              'Booking lapangan online 24/7',
-              'Pilih pelatih profesional',
-              'Pantau status iuran real-time',
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-2.5 text-court-100">
-                <HiCheckCircle className="w-5 h-5 text-court-400 flex-shrink-0" />
-                <span className="text-sm">{item}</span>
-              </li>
-            ))}
-          </ul>
+
+          {/* Feature Card */}
+          <div className="relative inline-block">
+            <div className="w-72 bg-[#E9F0E4] border border-[#D5E2CD] rounded-2xl p-4 shadow-[0_10px_25px_rgba(20,50,30,0.05)] transform rotate-1 hover:rotate-0 transition-transform duration-300">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-800 block mb-1">
+                MEMBERSHIP PRIVILEGE
+              </span>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight leading-snug mb-1.5">
+                Akses Program Pelatihan & Event
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed mb-2.5">
+                Jadwal latihan terpadu bersama coach bersertifikasi, sparring partner, dan komunitas klub.
+              </p>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900 bg-white/90 border border-[#D5E2CD] rounded-lg px-2.5 py-1 w-fit shadow-xs">
+                <HiCheckCircle className="w-4 h-4 text-emerald-700" />
+                <span>Pendaftaran Gratis</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Tagline */}
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 font-medium pt-3 shrink-0">
+          <span>Kenyamanan dan profesionalisme bermain tenis.</span>
+          <span className="text-slate-300">&copy; Volta</span>
         </div>
       </div>
 
-      {/* Right: Register form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-slate-50">
-        <div className="w-full max-w-md space-y-7">
-          {/* Back to landing page */}
+      {/* ========================================================
+          KOLOM KANAN: FORMULIR PENDAFTARAN MEMBER (SOLID NO SCROLL)
+          ======================================================== */}
+      <div className="w-full lg:w-1/2 bg-white p-6 sm:p-8 xl:p-12 flex flex-col justify-between h-full overflow-hidden">
+        {/* Top Bar: Navigasi */}
+        <div className="flex items-center justify-start mb-3 shrink-0">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 font-medium transition-colors group"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors group"
           >
-            <HiArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Kembali ke Beranda
+            <HiArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Kembali ke Beranda</span>
           </Link>
+        </div>
 
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2.5">
-            <div className="w-11 h-11 bg-court-600 rounded-xl flex items-center justify-center shadow-lg shadow-court-600/30">
-              <span className="text-white font-black text-lg">V</span>
-            </div>
-            <span className="font-extrabold text-xl text-slate-900 tracking-tight">VOLTA TENIS</span>
-          </div>
+        {/* Form Container */}
+        <div className="w-full max-w-md mx-auto my-auto py-1">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 block mb-1">
+            02 / DAFTAR MEMBER BARU
+          </span>
 
-          <div className="text-center lg:text-left">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Buat Akun Baru</h2>
-            <p className="mt-2 text-slate-500">Isi data diri Anda untuk mendaftar.</p>
-          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
+            Buat akun baru.
+          </h2>
 
+          <p className="text-xs text-slate-400 leading-relaxed font-normal mb-3.5">
+            Isi data diri Anda di bawah ini untuk memulai keanggotaan Volta Tenis.
+          </p>
+
+          {/* Alert Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm animate-in">
+            <div className="mb-3 p-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium leading-relaxed">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input id="displayName" label="Nama Lengkap" placeholder="John Doe" value={formData.displayName} onChange={handleChange} icon={HiUser} required />
-            <Input id="email" label="Email" type="email" placeholder="nama@email.com" value={formData.email} onChange={handleChange} icon={HiEnvelope} required />
-            <Input id="phone" label="No. Handphone" type="tel" placeholder="08xxxxxxxxxx" value={formData.phone} onChange={handleChange} icon={HiPhone} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input id="password" label="Password" type="password" placeholder="Min. 6 karakter" value={formData.password} onChange={handleChange} icon={HiLockClosed} required />
-              <Input id="confirmPassword" label="Konfirmasi" type="password" placeholder="Ulangi password" value={formData.confirmPassword} onChange={handleChange} icon={HiLockClosed} required />
+          <form onSubmit={handleSubmit} className="space-y-2.5">
+            {/* Baris 1: Nama & Nomor HP */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="Nama lengkap Anda"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nomor WhatsApp
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  placeholder="0812xxxxxxx"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                />
+              </div>
             </div>
-            <Button type="submit" loading={loading} className="w-full" size="lg">
-              Daftar Sekarang
-            </Button>
+
+            {/* Baris 2: Alamat Email */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Alamat Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="nama@email.com"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+              />
+            </div>
+
+            {/* Baris 3: Kata Sandi & Konfirmasi */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Kata Sandi
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  placeholder="Min. 6 karakter"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Konfirmasi Sandi
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  required
+                  placeholder="Ulangi kata sandi"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Toggle Tampilkan Sandi */}
+            <div className="flex items-center justify-between text-xs pt-0.5">
+              <label className="flex items-center gap-1.5 cursor-pointer text-slate-500 select-none">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={() => setShowPassword(!showPassword)}
+                  className="rounded text-emerald-800 focus:ring-emerald-700"
+                />
+                <span className="text-[11px]">Tampilkan Kata Sandi</span>
+              </label>
+            </div>
+
+            {/* Tombol Submit */}
+            <div className="pt-1.5">
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                className="w-full py-2.5 px-4 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm"
+              >
+                {loading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : null}
+                <span>Daftar Jadi Member</span>
+                <HiArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            </div>
           </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-            <div className="relative flex justify-center text-sm"><span className="bg-slate-50 px-4 text-slate-400">atau</span></div>
+          {/* Opsi Google Register */}
+          {loginWithGoogle && (
+            <div className="mt-2.5">
+              <button
+                type="button"
+                onClick={handleGoogleRegister}
+                disabled={loading || googleLoading}
+                className="w-full py-2 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <FcGoogle className="w-4 h-4" />
+                <span>Daftar dengan Google</span>
+              </button>
+            </div>
+          )}
+
+          {/* Tautan ke Login */}
+          <div className="mt-3.5 text-center border-t border-slate-100 pt-2.5">
+            <p className="text-xs text-slate-500 font-normal">
+              Sudah memiliki akun member?{' '}
+              <Link
+                to="/login"
+                className="text-emerald-800 font-bold underline underline-offset-4 hover:text-emerald-900 transition-colors"
+              >
+                Masuk di sini
+              </Link>
+            </p>
           </div>
+        </div>
 
-          <Button variant="secondary" className="w-full" size="lg" icon={FcGoogle} onClick={handleGoogleRegister} loading={loading}>
-            Daftar dengan Google
-          </Button>
-
-          <p className="text-center text-sm text-slate-500">
-            Sudah punya akun?{' '}
-            <Link to="/login" className="font-bold text-court-600 hover:text-court-500 transition-colors">
-              Masuk di sini
-            </Link>
-          </p>
+        {/* Bottom Footer */}
+        <div className="border-t border-slate-100 pt-3 mt-3 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-1 shrink-0">
+          <span>Volta Tenis Club &middot; Klub Pelatihan Tenis Resmi</span>
+          <span className="text-slate-400">Medan, Indonesia</span>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default RegisterPage;
+export default RegisterPage

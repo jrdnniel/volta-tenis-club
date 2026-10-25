@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   query,
@@ -17,72 +18,97 @@ import { isTimeOverlap } from '../utils/validators';
 const COLLECTION = 'bookings';
 
 /**
- * Create a new booking with anti-double-booking protection.
- * Uses Firestore Transaction to ensure atomic check-and-create.
+ * Buat sesi pelatihan baru bersama Coach.
+ * Lapangan TIDAK dipilih customer, melainkan akan ditentukan oleh Admin.
  */
 export const createBooking = async (bookingData) => {
-  const { courtId, date, startTime, endTime, coachId } = bookingData;
+  const { coachId, coachName, date, startTime, endTime } = bookingData;
 
   return await runTransaction(db, async (transaction) => {
-    // 1. Check for court time conflicts
-    const courtBookingsRef = collection(db, COLLECTION);
-    const courtQuery = query(
-      courtBookingsRef,
-      where('courtId', '==', courtId),
-      where('date', '==', date),
-      where('status', '==', BOOKING_STATUS.CONFIRMED)
-    );
+    const bookingsRef = collection(db, COLLECTION);
 
-    const courtSnapshot = await getDocs(courtQuery);
-    const existingBookings = courtSnapshot.docs.map((doc) => doc.data());
-
-    // Check for time overlap
-    const courtConflict = existingBookings.find((booking) =>
-      isTimeOverlap(startTime, endTime, booking.startTime, booking.endTime)
-    );
-
-    if (courtConflict) {
-      throw new Error(
-        `Slot ${startTime}-${endTime} sudah dipesan untuk lapangan ini. Silakan pilih waktu lain.`
-      );
-    }
-
-    // 2. Check for coach time conflicts (if coach is selected)
+    // Cek apakah Coach sudah ada jadwal latihan di tanggal dan jam yang sama
     if (coachId) {
       const coachQuery = query(
-        courtBookingsRef,
+        bookingsRef,
         where('coachId', '==', coachId),
         where('date', '==', date),
         where('status', '==', BOOKING_STATUS.CONFIRMED)
       );
 
       const coachSnapshot = await getDocs(coachQuery);
-      const coachBookings = coachSnapshot.docs.map((doc) => doc.data());
+      const existingCoachBookings = coachSnapshot.docs.map((d) => d.data());
 
-      const coachConflict = coachBookings.find((booking) =>
+      const coachConflict = existingCoachBookings.find((booking) =>
         isTimeOverlap(startTime, endTime, booking.startTime, booking.endTime)
       );
 
       if (coachConflict) {
         throw new Error(
-          `Coach tidak tersedia pada ${startTime}-${endTime}. Silakan pilih waktu atau coach lain.`
+          `Pelatih ${coachName || ''} sudah memiliki sesi latihan pada jam ${startTime} - ${endTime}. Silakan pilih jam lain.`
         );
       }
     }
 
-    // 3. No conflicts — create the booking
+    // Jika tidak ada konflik pada pelatih, buat pemesanan sesi latihan
     const newBookingRef = doc(collection(db, COLLECTION));
     transaction.set(newBookingRef, {
       ...bookingData,
+      courtId: bookingData.courtId || null,
+      courtName: bookingData.courtName || 'Menunggu Penugasan Admin',
+      courtStatus: bookingData.courtId ? 'assigned' : 'unassigned',
       status: BOOKING_STATUS.CONFIRMED,
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
 
     return newBookingRef.id;
   });
 };
 
-// Get all bookings for a specific date
+/**
+ * Admin menugaskan / menentukan lapangan untuk suatu sesi latihan.
+ * Memeriksa apakah lapangan tersebut sudah dipakai sesi lain di jam yang sama.
+ */
+export const assignCourtToBooking = async (bookingId, courtId, courtName, date, startTime, endTime, adminUid = null) => {
+  return await runTransaction(db, async (transaction) => {
+    // Cek apakah lapangan bentrok dengan sesi lain yang sudah ditugaskan
+    const bookingsRef = collection(db, COLLECTION);
+    const courtQuery = query(
+      bookingsRef,
+      where('courtId', '==', courtId),
+      where('date', '==', date),
+      where('status', '==', BOOKING_STATUS.CONFIRMED)
+    );
+
+    const courtSnapshot = await getDocs(courtQuery);
+    const existingCourtBookings = courtSnapshot.docs
+      .filter((d) => d.id !== bookingId)
+      .map((d) => d.data());
+
+    const conflict = existingCourtBookings.find((b) =>
+      isTimeOverlap(startTime, endTime, b.startTime, b.endTime)
+    );
+
+    if (conflict) {
+      throw new Error(
+        `Lapangan "${courtName}" sudah digunakan untuk sesi lain pada jam ${conflict.startTime} - ${conflict.endTime}. Silakan pilih lapangan lain.`
+      );
+    }
+
+    const bookingDocRef = doc(db, COLLECTION, bookingId);
+    transaction.update(bookingDocRef, {
+      courtId,
+      courtName,
+      courtStatus: 'assigned',
+      assignedBy: adminUid,
+      assignedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  });
+};
+
+// Ambil semua sesi pelatihan pada tanggal tertentu
 export const getBookingsByDate = async (date) => {
   const q = query(
     collection(db, COLLECTION),
@@ -94,20 +120,7 @@ export const getBookingsByDate = async (date) => {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
-// Get bookings for a specific court on a specific date
-export const getBookingsByCourtAndDate = async (courtId, date) => {
-  const q = query(
-    collection(db, COLLECTION),
-    where('courtId', '==', courtId),
-    where('date', '==', date),
-    where('status', '==', BOOKING_STATUS.CONFIRMED),
-    orderBy('startTime')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-};
-
-// Get my bookings
+// Ambil sesi pelatihan milik member tertentu
 export const getMyBookings = async (userId) => {
   const q = query(
     collection(db, COLLECTION),
@@ -118,15 +131,16 @@ export const getMyBookings = async (userId) => {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
-// Cancel a booking
+// Batalkan sesi pelatihan
 export const cancelBooking = async (bookingId) => {
   const docRef = doc(db, COLLECTION, bookingId);
   await updateDoc(docRef, {
     status: BOOKING_STATUS.CANCELLED,
+    updatedAt: serverTimestamp(),
   });
 };
 
-// Get all courts
+// Ambil semua data lapangan aktif (untuk penugasan oleh Admin)
 export const getAllCourts = async () => {
   const q = query(
     collection(db, 'courts'),
@@ -135,4 +149,3 @@ export const getAllCourts = async () => {
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
-

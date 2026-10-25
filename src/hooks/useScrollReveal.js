@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react';
  * @param {number} options.threshold - Visibility threshold (0-1). Default 0.15.
  * @param {string} options.rootMargin - Root margin. Default "0px 0px -60px 0px".
  */
-const useScrollReveal = ({ threshold = 0.15, rootMargin = '0px 0px -60px 0px' } = {}) => {
+const useScrollReveal = ({ threshold = 0.1, rootMargin = '0px 0px -30px 0px' } = {}) => {
   const containerRef = useRef(null);
 
   useEffect(() => {

@@ -179,7 +179,7 @@ const CourtsPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Kelola Lapangan</h1>
           <p className="text-gray-500 mt-1">
-            Tambah dan kelola lapangan tenis yang tersedia untuk booking.
+            Tambah dan kelola lapangan tenis klub untuk penugasan sesi latihan.
           </p>
         </div>
         <Button icon={HiPlus} onClick={openAddModal}>

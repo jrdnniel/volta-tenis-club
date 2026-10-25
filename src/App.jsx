@@ -27,9 +27,12 @@ import CoachSchedulePage from './pages/dashboard/CoachSchedulePage'
 import ProfilePage from './pages/dashboard/ProfilePage'
 import CourtsPage from './pages/dashboard/CourtsPage'
 import CoachesPage from './pages/dashboard/CoachesPage'
+import MemberCoachesPage from './pages/dashboard/MemberCoachesPage'
 import AllBookingsPage from './pages/dashboard/AllBookingsPage'
 import InviteManagementPage from './pages/dashboard/InviteManagementPage'
 import CoachApplicationsPage from './pages/dashboard/CoachApplicationsPage'
+import PackagesPage from './pages/dashboard/PackagesPage'
+import RateCardPage from './pages/dashboard/RateCardPage'
 
 // 404
 import NotFoundPage from './pages/NotFoundPage'
@@ -44,8 +47,14 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/admin-setup" element={<AdminSetupPage />} />
+
+      {/* Admin Invite: Mendukung query (?token=xyz) maupun path parameter (/admin/invite/:token) */}
       <Route path="/admin/invite" element={<AdminInvitePage />} />
+      <Route path="/admin/invite/:token" element={<AdminInvitePage />} />
+
+      {/* Rekrutmen Coach: Mendukung diakses lewat /careers maupun /coach/apply */}
       <Route path="/careers" element={<CoachApplyPage />} />
+      <Route path="/coach/apply" element={<CoachApplyPage />} />
 
       {/* ============================
           PROTECTED DASHBOARD ROUTES
@@ -61,6 +70,9 @@ function App() {
         {/* Semua role bisa akses */}
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="coaches-list" element={<MemberCoachesPage />} />
+        <Route path="our-coaches" element={<MemberCoachesPage />} />
+        <Route path="rate-card" element={<RateCardPage />} />
 
         {/* Member & Coach bisa booking */}
         <Route path="booking" element={<BookingPage />} />
@@ -121,6 +133,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={[ROLES.ADMIN]}>
               <CoachApplicationsPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="packages"
+          element={
+            <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+              <PackagesPage />
             </RoleRoute>
           }
         />

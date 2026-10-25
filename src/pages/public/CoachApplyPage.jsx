@@ -1,254 +1,317 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { submitCoachApplication } from '../../services/coachApplicationService';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
-import {
-  HiArrowLeft,
-  HiUser,
-  HiEnvelope,
-  HiPhone,
-  HiAcademicCap,
-  HiCheckCircle,
-  HiTrophy,
-  HiStar,
-  HiClock,
-  HiCalendarDays,
-} from 'react-icons/hi2';
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import * as coachApplicationService from '../../services/coachApplicationService'
+import { HiArrowUpRight, HiArrowLeft, HiCheckCircle, HiAcademicCap } from 'react-icons/hi2'
 
 const CoachApplyPage = () => {
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     phone: '',
-    experience: '',
+    experienceYears: '',
     certifications: '',
+    specialty: '',
+    portfolioUrl: '',
     motivation: '',
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  })
+
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-  };
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
-    // Basic validation
-    if (!formData.fullName || !formData.email || !formData.phone) {
-      return setError('Nama, email, dan no. handphone wajib diisi.');
-    }
-
-    setLoading(true);
     try {
-      await submitCoachApplication({
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        experience: formData.experience,
-        certifications: formData.certifications,
-        motivation: formData.motivation,
-      });
-      setSuccess(true);
-    } catch (err) {
-      console.error('Error submitting application:', err);
-      setError('Gagal mengirim lamaran. Silakan coba lagi.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      const submitFn =
+        coachApplicationService.submitCoachApplication ||
+        coachApplicationService.submitApplication ||
+        coachApplicationService.createCoachApplication ||
+        coachApplicationService.applyAsCoach
 
-  // Success state
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-5">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
-            <HiCheckCircle className="w-8 h-8 text-emerald-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Lamaran Terkirim!
-            </h1>
-            <p className="text-slate-500 mt-3 leading-relaxed">
-              Terima kasih telah melamar sebagai pelatih di Volta Tenis Club.
-              Tim kami akan meninjau lamaran Anda dan menghubungi melalui email
-              atau telepon yang terdaftar.
-            </p>
-          </div>
-          <Link to="/">
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5">
-              <HiArrowLeft className="w-4 h-4" />
-              Kembali ke Beranda
-            </button>
-          </Link>
-        </div>
-      </div>
-    );
+      if (submitFn) {
+        await submitFn({
+          fullName: formData.name,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          experience: `${formData.experienceYears} tahun (${formData.specialty})`,
+          experienceYears: Number(formData.experienceYears) || 0,
+          certifications: formData.certifications,
+          specialty: formData.specialty,
+          portfolioUrl: formData.portfolioUrl,
+          motivation: formData.motivation,
+          status: 'pending',
+          appliedAt: new Date().toISOString(),
+        })
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setError(err.message || 'Gagal mengirim lamaran. Silakan coba lagi.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left: Decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-emerald-800 to-slate-900" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxLjUiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-60" />
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#FAF8F5] text-slate-800 antialiased font-sans selection:bg-emerald-100 selection:text-emerald-900">
+      {/* Left Column */}
+      <div className="lg:w-1/2 bg-[#FAF8F5] p-8 sm:p-12 lg:p-16 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#ECE7DE] relative overflow-hidden min-h-[480px] lg:min-h-screen">
+        <div className="relative z-10">
+          <Link to="/" className="inline-flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-emerald-800 text-white rounded-xl flex items-center justify-center font-extrabold text-base shadow-sm group-hover:scale-105 transition-transform">
+              V
+            </div>
+            <div>
+              <span className="font-extrabold text-slate-900 text-lg tracking-tight block leading-tight">
+                Volta <span className="text-emerald-700">Tenis</span>
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase block">
+                Karir & Rekrutmen Pelatih
+              </span>
+            </div>
+          </Link>
+        </div>
 
-        <div className="relative max-w-md text-white space-y-6">
-          <div className="w-16 h-16 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
-            <HiAcademicCap className="w-8 h-8 text-emerald-300" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/3 -translate-y-1/4 w-[480px] h-[480px] rounded-full border border-[#E5E0D5]/70" />
+
+        <div className="relative z-10 my-10 lg:my-0 max-w-md">
+          <div className="inline-flex items-center gap-2 bg-[#EAE5D9]/70 rounded-full px-3 py-1 mb-5">
+            <HiAcademicCap className="w-3.5 h-3.5 text-emerald-800" />
+            <span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">
+              Official Coach Partnership
+            </span>
           </div>
-          <h1 className="text-4xl font-black tracking-tight">Gabung sebagai Pelatih</h1>
-          <p className="text-emerald-200 text-lg leading-relaxed">
-            Kami mencari pelatih tenis yang berpengalaman dan berdedikasi.
-            Bergabunglah dengan tim profesional Volta Tenis Club.
+
+          <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-slate-900 tracking-tight leading-[1.18] mb-5">
+            Membina bakat baru<br />
+            bersama klub<br />
+            <span className="font-serif italic font-normal text-emerald-800">yang profesional.</span>
+          </h1>
+
+          <p className="text-sm text-slate-500 leading-relaxed font-normal mb-8 max-w-sm">
+            Bergabunglah dengan jajaran pelatih resmi Volta Tenis Club. Dapatkan fasilitas lapangan berstandar turnamen, peserta latihan aktif, dan sistem manajemen jadwal yang teratur.
           </p>
 
-          <div className="space-y-3 pt-2">
-            {[
-              { icon: HiTrophy, text: 'Fasilitas lapangan berstandar tinggi' },
-              { icon: HiCalendarDays, text: 'Jadwal fleksibel sesuai preferensi' },
-              { icon: HiStar, text: 'Komunitas pemain aktif & berkembang' },
-              { icon: HiClock, text: 'Sistem booking & manajemen modern' },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                <Icon className="w-5 h-5 text-emerald-300 flex-shrink-0" />
-                <span className="text-sm text-emerald-100">{text}</span>
+          <div className="relative inline-block mt-2">
+            <div className="w-72 bg-[#E9F0E4] border border-[#D5E2CD] rounded-2xl p-5 shadow-[0_10px_25px_rgba(20,50,30,0.05)] transform rotate-1 hover:rotate-0 transition-transform duration-300">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-800 block mb-1">
+                KEMITRAAN PELATIH
+              </span>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-snug mb-2">
+                Fasilitas Latihan Lengkap
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                Jadwal mengajar fleksibel dan sistem pembagian honor transparan.
+              </p>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900 bg-white/90 border border-[#D5E2CD] rounded-lg px-2.5 py-1 w-fit shadow-xs">
+                <HiCheckCircle className="w-4 h-4 text-emerald-700" />
+                <span>Pelatih Berlisensi</span>
               </div>
-            ))}
+            </div>
           </div>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 font-medium pt-8">
+          <span>Pengembangan Olahraga Tenis Indonesia</span>
+          <span className="text-slate-300">&copy; Volta Tenis</span>
         </div>
       </div>
 
-      {/* Right: Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-slate-50">
-        <div className="w-full max-w-md space-y-7">
+      {/* Right Column */}
+      <div className="lg:w-1/2 bg-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between min-h-[520px] lg:min-h-screen">
+        <div className="flex items-center justify-between mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 font-medium transition-colors group"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors group"
           >
-            <HiArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Kembali ke Beranda
+            <HiArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Kembali ke Beranda</span>
           </Link>
+        </div>
 
-          {/* Mobile header */}
-          <div className="lg:hidden flex items-center justify-center gap-2.5">
-            <div className="w-11 h-11 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-600/30">
-              <HiAcademicCap className="w-6 h-6 text-white" />
+        <div className="w-full max-w-sm mx-auto my-auto py-4">
+          {submitted ? (
+            <div className="text-center py-6">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-4 text-emerald-800">
+                <HiCheckCircle className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-2">
+                Lamaran Terkirim.
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto mb-8 font-normal">
+                Tim manajemen Volta Tenis Club akan meninjau pengalaman dan sertifikasi kepelatihan Anda. Kami akan menghubungi Anda segera.
+              </p>
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center gap-1.5 w-full py-3 px-4 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold transition-all"
+              >
+                <HiArrowLeft className="w-4 h-4" />
+                <span>Kembali ke Beranda</span>
+              </Link>
             </div>
-            <span className="font-extrabold text-xl text-slate-900 tracking-tight">Lamar Pelatih</span>
-          </div>
+          ) : (
+            <>
+              <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400 block mb-2">
+                04 / LAMARAN PELATIH
+              </span>
 
-          <div className="text-center lg:text-left">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Form Lamaran Pelatih
-            </h2>
-            <p className="mt-2 text-slate-500">
-              Isi data diri dan pengalaman Anda di bawah ini.
-            </p>
-          </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+                Lamar Jadi Pelatih.
+              </h2>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-              {error}
-            </div>
+              <p className="text-sm text-slate-400 leading-relaxed font-normal mb-7">
+                Kirimkan kualifikasi melatih Anda untuk bergabung dengan tim pelatih resmi Volta Tenis.
+              </p>
+
+              {error && (
+                <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium leading-relaxed">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nama Lengkap
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="Nama lengkap sesuai lisensi"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      placeholder="nama@email.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      No. WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      required
+                      placeholder="08xxxxxxxxxx"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Pengalaman (Tahun)
+                    </label>
+                    <input
+                      type="number"
+                      name="experienceYears"
+                      min="0"
+                      required
+                      placeholder="Contoh: 3"
+                      value={formData.experienceYears}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Sertifikasi Lisensi
+                    </label>
+                    <input
+                      type="text"
+                      name="certifications"
+                      required
+                      placeholder="ITF, PELTI, dll."
+                      value={formData.certifications}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Spesialisasi Program Latihan
+                  </label>
+                  <input
+                    type="text"
+                    name="specialty"
+                    required
+                    placeholder="Contoh: Junior, Dewasa, Private Sparring"
+                    value={formData.specialty}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Ringkasan Pengalaman & Motivasi
+                  </label>
+                  <textarea
+                    name="motivation"
+                    rows={3}
+                    required
+                    placeholder="Ceritakan latar belakang kepelatihan dan motivasi Anda..."
+                    value={formData.motivation}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 transition-all resize-none"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 px-4 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm"
+                  >
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : null}
+                    <span>Kirim Lamaran Pelatih</span>
+                    <HiArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                  </button>
+                </div>
+              </form>
+            </>
           )}
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              id="fullName"
-              label="Nama Lengkap"
-              placeholder="John Doe"
-              value={formData.fullName}
-              onChange={handleChange}
-              icon={HiUser}
-              required
-            />
-            <Input
-              id="email"
-              label="Email"
-              type="email"
-              placeholder="nama@email.com"
-              value={formData.email}
-              onChange={handleChange}
-              icon={HiEnvelope}
-              required
-            />
-            <Input
-              id="phone"
-              label="No. Handphone"
-              type="tel"
-              placeholder="08xxxxxxxxxx"
-              value={formData.phone}
-              onChange={handleChange}
-              icon={HiPhone}
-              required
-            />
-
-            {/* Experience */}
-            <div>
-              <label htmlFor="experience" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Pengalaman Melatih
-              </label>
-              <textarea
-                id="experience"
-                rows={3}
-                value={formData.experience}
-                onChange={handleChange}
-                placeholder="Contoh: 5 tahun melatih di klub ABC, pernah membina atlet junior provinsi..."
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all resize-none"
-              />
-            </div>
-
-            {/* Certifications */}
-            <div>
-              <label htmlFor="certifications" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Sertifikasi / Lisensi
-              </label>
-              <textarea
-                id="certifications"
-                rows={2}
-                value={formData.certifications}
-                onChange={handleChange}
-                placeholder="Contoh: Lisensi PELTI Level 2, ITF Coaching Certificate..."
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all resize-none"
-              />
-            </div>
-
-            {/* Motivation */}
-            <div>
-              <label htmlFor="motivation" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Motivasi / Surat Pengantar
-              </label>
-              <textarea
-                id="motivation"
-                rows={4}
-                value={formData.motivation}
-                onChange={handleChange}
-                placeholder="Ceritakan mengapa Anda tertarik bergabung dan apa yang bisa Anda kontribusikan..."
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all resize-none"
-              />
-            </div>
-
-            <Button type="submit" loading={loading} className="w-full" size="lg">
-              Kirim Lamaran
-            </Button>
-          </form>
-
-          <p className="text-center text-xs text-slate-400">
-            Sudah punya akun?{' '}
-            <Link to="/login" className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors">
-              Masuk di sini
-            </Link>
-          </p>
+        <div className="border-t border-slate-100 pt-6 mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
+          <span>Volta Tenis Club &middot; Rekrutmen & Pengembangan Pelatih</span>
+          <span>Seleksi Terbuka</span>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default CoachApplyPage;
-

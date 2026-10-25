@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -171,14 +172,14 @@ const DashboardHome = () => {
         )}
         <StatCard
           icon={HiCalendarDays}
-          label={isAdmin ? 'Total Booking' : 'Booking Saya'}
+          label={isAdmin ? 'Total Sesi Latihan' : 'Sesi Latihan Saya'}
           value={stats.totalBookings}
           subtext="Semua waktu"
           color="blue"
         />
         <StatCard
           icon={HiClock}
-          label="Booking Hari Ini"
+          label="Sesi Latihan Hari Ini"
           value={stats.todayBookings}
           subtext={new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
           color="cyan"
@@ -201,35 +202,66 @@ const DashboardHome = () => {
         )}
       </div>
 
+      {/* Banner Member: Temui Pelatih Kami */}
+      {!isAdmin && (
+        <div className="bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg shadow-emerald-950/10">
+          <div className="relative z-10 max-w-xl">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-300 block mb-1.5">
+              AKADEMI PELATIHAN TENIS VOLTA
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2">
+              Tingkatkan Pukulan & Footwork Bersama Coach Resmi
+            </h2>
+            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed mb-5">
+              Lihat profil pelatih resmi dan pilih paket latihan yang telah disediakan oleh Admin. Terbuka umum untuk semua usia (dewasa maupun anak-anak).
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/dashboard/coaches-list"
+                className="px-5 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-bold transition-all shadow-xs"
+              >
+                Lihat Semua Pelatih ↗
+              </Link>
+              <Link
+                to="/dashboard/booking"
+                className="px-5 py-2.5 bg-emerald-700/60 hover:bg-emerald-700 text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition-all"
+              >
+                Pesan Sesi Latihan
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Bookings */}
         <Card>
           <Card.Header>
-            <Card.Title>Booking Terbaru</Card.Title>
+            <Card.Title>Sesi Latihan Terbaru</Card.Title>
           </Card.Header>
           {recentBookings.length === 0 ? (
             <div className="text-center py-8">
               <HiCalendarDays className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">Belum ada booking</p>
+              <p className="text-sm text-gray-500">Belum ada sesi latihan</p>
             </div>
           ) : (
             <div className="space-y-3">
               {recentBookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                      <HiCalendarDays className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 font-bold text-xs">
+                      🎾
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {booking.courtName}
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        Pelatih: {booking.coachName || 'Pelatih Volta'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {formatDate(booking.date)} • {booking.startTime} - {booking.endTime}
+                        {formatDate(booking.date)} • {booking.startTime} - {booking.endTime} • Lapangan: <span className="font-semibold text-emerald-800">{booking.courtName || 'Menunggu Admin'}</span>
                       </p>
                     </div>
                   </div>

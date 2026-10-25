@@ -1,89 +1,67 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { HiHeart } from 'react-icons/hi2';
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 text-slate-400">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          {/* Brand */}
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-10 h-10 bg-court-600 rounded-xl flex items-center justify-center shadow-lg shadow-court-600/30">
-                <span className="text-white font-black text-lg">V</span>
-              </div>
-              <div>
-                <span className="text-white font-extrabold text-lg tracking-tight">VOLTA</span>
-                <span className="text-court-400 text-xs font-semibold ml-1 tracking-widest">TC</span>
-              </div>
+    <footer className="bg-gray-50 border-t border-gray-100 text-gray-500 py-12 px-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+        {/* Brand Info */}
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-extrabold text-sm">V</span>
             </div>
-            <p className="text-sm leading-relaxed text-slate-500">
-              Klub tenis modern dengan fasilitas terbaik untuk semua level pemain.
-            </p>
+            <span className="font-extrabold text-gray-800 text-lg tracking-tight">
+              Volta <span className="text-emerald-600">Tenis</span>
+            </span>
           </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Menu</h4>
-            <ul className="space-y-2.5 text-sm">
-              {[
-                { label: 'Fasilitas', href: '#fasilitas' },
-                { label: 'Jadwal', href: '#jadwal' },
-                { label: 'Harga', href: '#harga' },
-                { label: 'Kontak', href: '#kontak' },
-              ].map((link) => (
-                <li key={link.label}>
-                  <a href={link.href} className="text-slate-400 hover:text-court-400 transition-colors duration-300">
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Membership */}
-          <div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Keanggotaan</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <Link to="/register" className="text-slate-400 hover:text-clay-400 transition-colors duration-300">
-                  Daftar Akun
-                </Link>
-              </li>
-              <li>
-                <Link to="/login" className="text-slate-400 hover:text-clay-400 transition-colors duration-300">
-                  Masuk
-                </Link>
-              </li>
-              <li>
-                <Link to="/dashboard/booking" className="text-slate-400 hover:text-clay-400 transition-colors duration-300">
-                  Booking Lapangan
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Kontak</h4>
-            <ul className="space-y-2.5 text-sm text-slate-500">
-              <li>📍 Jl. Olahraga No. 123, Jakarta</li>
-              <li>📞 (021) 1234-5678</li>
-              <li>✉️ info@voltatenis.club</li>
-              <li>🕐 Setiap Hari: 06:00 — 22:00</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="border-t border-slate-800 mt-10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-500">
-            &copy; {new Date().getFullYear()} Volta Tenis Club. All rights reserved.
-          </p>
-          <p className="text-xs text-slate-600 flex items-center gap-1">
-            Dibuat dengan <HiHeart className="w-3.5 h-3.5 text-clay-500" /> di Indonesia
+          <p className="text-sm text-gray-400 mt-2 max-w-md leading-relaxed">
+            Komunitas dan fasilitas lapangan tenis modern dengan dukungan pelatih profesional
+            tersertifikasi.
           </p>
         </div>
+
+        {/* Navigasi Member */}
+        <div>
+          <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3">
+            Akses Cepat
+          </h4>
+          <ul className="space-y-2 text-sm text-gray-500">
+            <li>
+              <Link to="/" className="hover:text-emerald-600 transition-colors">
+                Beranda
+              </Link>
+            </li>
+            <li>
+              <Link to="/register" className="hover:text-emerald-600 transition-colors">
+                Daftar Member
+              </Link>
+            </li>
+            <li>
+              <Link to="/login" className="hover:text-emerald-600 transition-colors">
+                Masuk Akun
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* Bagian Karir / Rekrutmen */}
+        <div>
+          <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3">
+            Karir & Kemitraan
+          </h4>
+          <ul className="space-y-2 text-sm text-gray-500">
+            <li>
+              <Link to="/careers" className="hover:text-emerald-600 transition-colors">
+                Karir: Lamar Jadi Pelatih
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto border-t border-gray-200/60 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400">
+        <p>&copy; {new Date().getFullYear()} Volta Tenis Club. All rights reserved.</p>
       </div>
     </footer>
   );
