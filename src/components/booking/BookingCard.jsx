@@ -21,8 +21,7 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
 
   const isCourtAssigned = Boolean(
     booking.courtId &&
-    booking.courtStatus === 'assigned' &&
-    booking.courtName !== 'Menunggu Penugasan Admin'
+    booking.courtStatus === 'assigned'
   );
 
   return (
@@ -74,20 +73,79 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
               )}
             </div>
 
-            {/* Informasi Penugasan Lapangan */}
-            <div className="pt-0.5 flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 text-xs">
-                <HiMapPin className={`w-3.5 h-3.5 ${isCourtAssigned ? 'text-emerald-700' : 'text-amber-500'}`} />
-                <span className="text-slate-400">Lapangan:</span>
-                <span className={`font-semibold ${isCourtAssigned ? 'text-emerald-800' : 'text-amber-600'}`}>
-                  {isCourtAssigned ? booking.courtName : 'Menunggu Penugasan Admin'}
-                </span>
+            {/* Informasi Lokasi Lapangan (Basecamp Volta vs Out Basecamp) */}
+            <div className="pt-0.5 space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                {booking.courtType === 'out_basecamp' ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-200">
+                    <HiMapPin className="w-3 h-3 text-purple-700" />
+                    Out Basecamp
+                  </span>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <HiMapPin className="w-3 h-3 text-emerald-700" />
+                      Basecamp
+                    </span>
+                    {booking.isIndoor ||
+                    booking.courtId === 'karya_1' ||
+                    (booking.courtName || '').toLowerCase().includes('karya') ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-200">
+                        🏢 Indoor
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200">
+                        ☀️ Outdoor
+                      </span>
+                    )}
+                  </>
+                )}
+
+                <div className="flex items-center gap-1 font-semibold text-slate-800">
+                  <span className="text-slate-400">Lokasi:</span>
+                  <span className="font-bold text-slate-900">{booking.courtName || 'Basecamp Volta'}</span>
+                </div>
+
+                {(booking.packageName || booking.trainingLevel) && (
+                  <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-2 py-0.5 rounded-md font-semibold">
+                    {booking.packageName || `Paket: ${booking.trainingLevel}`}
+                  </span>
+                )}
+                {booking.paymentStatus === 'paid' && (
+                  <span className="text-[10px] bg-sky-50 text-sky-800 border border-sky-200/60 px-2 py-0.5 rounded-md font-semibold">
+                    VA {booking.paymentBank ? booking.paymentBank.toUpperCase() : ''} • Lunas
+                  </span>
+                )}
               </div>
-              {(booking.packageName || booking.trainingLevel) && (
-                <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-2 py-0.5 rounded-md font-semibold">
-                  {booking.packageName || `Paket: ${booking.trainingLevel}`}
-                </span>
+
+              {/* Rincian Alamat & Deskripsi jika Out Basecamp */}
+              {booking.courtType === 'out_basecamp' && (booking.courtAddress || booking.outBasecampDescription) && (
+                <div className="text-[11px] bg-purple-50/70 border border-purple-100 rounded-xl p-2 text-purple-950">
+                  {booking.courtAddress && (
+                    <p className="font-medium">
+                      <strong>Alamat:</strong> {booking.courtAddress}
+                    </p>
+                  )}
+                  {booking.outBasecampDescription && (
+                    <p className="mt-0.5 text-purple-900/80 italic">
+                      <strong>Deskripsi:</strong> &ldquo;{booking.outBasecampDescription}&rdquo;
+                    </p>
+                  )}
+                </div>
               )}
+
+              {/* Info Kebijakan Hujan jika Lapangan Outdoor */}
+              {booking.courtType === 'basecamp' &&
+                !booking.isIndoor &&
+                booking.courtId !== 'karya_1' &&
+                !(booking.courtName || '').toLowerCase().includes('karya') && (
+                  <p className="text-[10px] text-amber-900 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200/70 flex items-center gap-1.5">
+                    <HiInformationCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>
+                      <strong>Aturan Hujan Outdoor:</strong> &lt;15 mnt (ganti 1 sesi gratis), 15—30 mnt (kompensasi 30 mnt), &gt;30 mnt (sesi selesai).
+                    </span>
+                  </p>
+                )}
             </div>
 
             {/* Catatan Sesi */}

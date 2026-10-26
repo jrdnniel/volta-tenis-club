@@ -10,6 +10,7 @@ import {
   HiInformationCircle,
   HiArrowRight,
   HiUserGroup,
+  HiCheck,
 } from 'react-icons/hi2';
 
 const RateCardPage = () => {
@@ -21,17 +22,11 @@ const RateCardPage = () => {
       {/* Header Halaman */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold tracking-wide uppercase mb-2">
-            <HiSparkles className="w-4 h-4 text-emerald-700" />
-            <span>Tarif & Paket Resmi Volta</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Official Rate Card
           </h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
-            Daftar paket pelatihan dan sesi latihan resmi Volta Tenis Club yang ditentukan oleh Admin.
-            Berlaku umum untuk seluruh anggota. Tidak ada sistem sewa lapangan mandiri — seluruh
-            lapangan latihan diatur langsung oleh manajemen.
+            Daftar paket pelatihan resmi Volta Tenis Club. Terbagi menjadi Paket Basecamp Volta (Kosek, Emerald, Karya) dan Paket Out Basecamp (lapangan pilihan member).
           </p>
         </div>
 
@@ -40,19 +35,20 @@ const RateCardPage = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all self-start md:self-auto"
         >
           <HiCalendarDays className="w-4 h-4 stroke-[2]" />
-          <span>Pesan Sesi Latihan</span>
+          <span>Pesan Paket & Jadwal</span>
         </Link>
       </div>
 
-      {/* Info Banner Lapangan */}
+      {/* Info Banner Kebijakan Lapangan Basecamp & Out Basecamp */}
       <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
         <HiInformationCircle className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-        <div className="text-xs text-emerald-950 leading-relaxed">
-          <p className="font-bold">Pengaturan Lapangan Oleh Manajemen</p>
-          <p className="text-emerald-800 mt-0.5">
-            Setiap pemesanan pelatih atau sesi hitting akan secara otomatis dialokasikan lapangan
-            oleh Admin di basecamp resmi (Kosek Polonia, Karya, Emerald, atau The Racket Club). Anda
-            cukup datang dan fokus berlatih!
+        <div className="text-xs text-emerald-950 leading-relaxed space-y-1">
+          <p className="font-extrabold text-emerald-900">Ketentuan Lapangan Latihan Resmi Volta:</p>
+          <p className="text-emerald-800">
+            &bull; <strong>Paket Basecamp:</strong> Fasilitas lapangan resmi di Basecamp Volta (Kosek, Emerald, Karya) sudah termasuk. Member paket Basecamp juga dapat memilih bermain di Out Basecamp jika diinginkan (biaya sewa lapangan luar ditanggung pribadi oleh member).
+          </p>
+          <p className="text-emerald-800">
+            &bull; <strong>Paket Out Basecamp:</strong> Khusus untuk latihan di lapangan luar pilihan member. Member paket Out Basecamp tidak dapat menggunakan lapangan Basecamp yang disediakan Volta.
           </p>
         </div>
       </div>
@@ -62,8 +58,8 @@ const RateCardPage = () => {
         {[
           { id: 'all', label: 'Semua Rate Card' },
           { id: 'hitting', label: 'Hitting Session' },
-          { id: 'indoor', label: 'Indoor (The Racket Club)' },
-          { id: 'basecamp', label: 'Basecamp (Kosek Polonia & Karya)' },
+          { id: 'basecamp', label: 'Coaching Basecamp (Kosek, Emerald & Karya)' },
+          { id: 'out_basecamp', label: 'Coaching Out Basecamp' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -81,16 +77,18 @@ const RateCardPage = () => {
 
       {/* ========================================================
           KONTEN 3 KARTU RATE CARD RESMI:
-          Ukuran 100% Sama, Solid, Rapi, & Tanpa Teks Kepotong
+          1. Hitting Session
+          2. Coaching Basecamp (Bisa Basecamp & Out Basecamp)
+          3. Coaching Out Basecamp (Khusus Out Basecamp)
           ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* ========================================================
             KARTU 1: HITTING SESSION (OLIVE COURT THEME #35422D)
             ======================================================== */}
         {(activeTab === 'all' || activeTab === 'hitting') && (
-          <div className="rounded-3xl bg-[#35422D] text-[#FAF8F5] p-7 shadow-xl relative flex flex-col justify-between border border-[#48583E] h-full min-h-[860px]">
+          <div className="rounded-3xl bg-[#35422D] text-[#FAF8F5] p-7 shadow-xl relative flex flex-col justify-between border border-[#48583E] h-full min-h-[820px]">
             <div className="flex-1 flex flex-col">
-              {/* Header Seragam (h-24) */}
+              {/* Header Seragam */}
               <div className="text-center pb-4 border-b border-white/15 h-24 flex flex-col justify-center shrink-0">
                 <span className="text-xs font-serif italic text-emerald-200 tracking-wider block mb-1">
                   Rate Card
@@ -98,105 +96,52 @@ const RateCardPage = () => {
                 <h2 className="text-2xl font-black tracking-tight uppercase text-white leading-tight">
                   Hitting Session
                 </h2>
-                <p className="text-xs text-emerald-100/80 font-medium mt-0.5">with Volta</p>
+                <p className="text-xs text-emerald-100/80 font-medium mt-0.5">Sparring Partner Volta</p>
               </div>
 
-              {/* Court Accent Image Preview (h-44) */}
-              <div
-                onClick={() =>
-                  setModalImage({
-                    src: '/images/ratecard-hitting.png',
-                    title: 'Rate Card: Hitting Session with Volta',
-                  })
-                }
-                className="w-full h-44 rounded-2xl overflow-hidden shadow-inner relative my-5 border-2 border-white/20 cursor-pointer group shrink-0"
-              >
-                <img
-                  src="/images/ratecard-hitting.png"
-                  alt="Rate Card Hitting Session"
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow-md">
-                    <HiEye className="w-4 h-4 text-emerald-800" />
-                    Lihat Scan Asli
-                  </span>
-                </div>
+              {/* Card Badge Note */}
+              <div className="my-5 p-4 rounded-2xl bg-white/10 border border-white/15 text-xs text-emerald-100 leading-relaxed">
+                <p className="font-bold text-white mb-1">Fokus Reli & Tempo Permainan:</p>
+                <p>Sesi latihan reli intensif bersama sparing partner terlatih Volta untuk mengasah ritme groundstroke dan kesiapan bertanding.</p>
               </div>
 
-              {/* Price & Service Table (min-h-[250px]) */}
-              <div className="space-y-3 text-xs pb-4 border-b border-white/15 min-h-[250px] flex flex-col justify-between shrink-0">
+              {/* Price Table */}
+              <div className="space-y-3 text-xs pb-4 border-b border-white/15 flex-1 flex flex-col justify-center">
                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-emerald-200">
-                  <span>Layanan & Sesi</span>
-                  <span>Tarif Sesi</span>
+                  <span>Pilihan Sesi</span>
+                  <span>Tarif / Sesi</span>
                 </div>
 
-                {/* Row 1: Hitting Single */}
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center py-2 border-b border-white/10">
                   <div>
-                    <strong className="block text-emerald-200 text-xs">Hitting Session (Single)</strong>
-                    <span className="text-[11px] text-emerald-100/70">60 mins / Sparring Partner</span>
+                    <strong className="block text-white text-xs">Hitting Single</strong>
+                    <span className="text-[10px] text-emerald-200/80">60 Menit Sesi Reli</span>
                   </div>
-                  <div className="text-right">
-                    <span className="font-black text-white text-base">Rp 100k</span>
-                    <span className="text-[10px] text-emerald-200 block">/ session</span>
-                  </div>
+                  <span className="font-black text-white text-base">Rp 100.000</span>
                 </div>
 
-                {/* Row 2: Add-on Pemain */}
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center py-2">
                   <div>
-                    <strong className="block text-emerald-200 text-xs">Add-on Pemain Tambahan</strong>
-                    <span className="text-[11px] text-emerald-100/70">Reli berpasangan</span>
+                    <strong className="block text-white text-xs">Hitting + Ballboy</strong>
+                    <span className="text-[10px] text-emerald-200/80">60 Menit + Add-on Ballboy</span>
                   </div>
-                  <div className="text-right">
-                    <span className="font-black text-white text-xs">+25k</span>
-                    <span className="text-[10px] text-emerald-200/80 block">/ person</span>
-                  </div>
+                  <span className="font-black text-white text-base">Rp 125.000</span>
                 </div>
 
-                {/* Row 3: Add-on Ballboy */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <strong className="block text-emerald-200 text-xs">Add-on Ballboy</strong>
-                    <span className="text-[11px] text-emerald-100/70">Court & ballboy terkoordinasi</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-black text-white text-xs">+25k</span>
-                    <span className="text-[10px] text-emerald-200/80 block">/ person</span>
-                  </div>
+                <div className="pt-3 text-[11px] text-emerald-200/80 space-y-1">
+                  <p>&bull; Game only fokus groundstrokes dan ritme reli.</p>
+                  <p>&bull; Dapat dilakukan di Basecamp Volta maupun Out Basecamp.</p>
                 </div>
-
-                {/* Row 4: Mode Sesi */}
-                <div className="flex justify-between items-start pt-2 border-t border-white/10">
-                  <div>
-                    <strong className="block text-emerald-200 text-xs">Karakteristik Sesi</strong>
-                    <span className="text-[11px] text-emerald-100/70">Groundstrokes, reli & ritme kaki</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-emerald-300 font-bold text-xs bg-black/30 px-2 py-0.5 rounded-md">
-                      Game Only
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ketentuan / Notes (Alami, Tanpa Ketinggian Kaku, Tidak Ada yang Terpotong) */}
-              <div className="pt-3.5 text-[11px] leading-relaxed text-emerald-100/90 space-y-1.5 flex-1">
-                <p>• Perfect for players looking to rally, refine strokes & enjoy consistent hitting.</p>
-                <p>• No coaching provided, game and groundstrokes only.</p>
-                <p>• Court & Ballboy not included (add-on Rp 25k/person).</p>
-                <p className="text-emerald-200 font-semibold">• Lapangan latihan disiapkan langsung oleh manajemen Volta.</p>
               </div>
             </div>
 
-            {/* Bottom Section: CTA + Footer */}
+            {/* Bottom CTA */}
             <div className="pt-5 border-t border-white/15 shrink-0 space-y-3 mt-4">
               <Link
-                to="/dashboard/booking"
+                to="/dashboard/booking?action=order&packageId=rc_hitting_single"
                 className="w-full block text-center py-3 rounded-xl bg-white text-[#35422D] font-black text-xs hover:bg-emerald-50 transition-colors shadow-xs"
               >
-                Pesan Hitting Session
+                Pilih Hitting Session & Lanjut
               </Link>
               <div className="flex items-center justify-between text-[11px] text-emerald-200/80 pt-1">
                 <span>@voltatennisclub</span>
@@ -207,131 +152,75 @@ const RateCardPage = () => {
         )}
 
         {/* ========================================================
-            KARTU 2: INDOOR THE RACKET CLUB (WARM BROWN #5E4430)
+            KARTU 2: COACHING BASECAMP (FOREST GREEN #2A4032)
             ======================================================== */}
-        {(activeTab === 'all' || activeTab === 'indoor') && (
-          <div className="rounded-3xl bg-[#5E4430] text-[#FAF8F5] p-7 shadow-xl relative flex flex-col justify-between border border-[#75573F] h-full min-h-[860px]">
+        {(activeTab === 'all' || activeTab === 'basecamp') && (
+          <div className="rounded-3xl bg-[#2A4032] text-[#FAF8F5] p-7 shadow-xl relative flex flex-col justify-between border border-[#3A5643] h-full min-h-[820px]">
             <div className="flex-1 flex flex-col">
-              {/* Header Seragam (h-24) */}
+              {/* Header Seragam */}
               <div className="text-center pb-4 border-b border-white/15 h-24 flex flex-col justify-center shrink-0">
-                <h2 className="text-2xl font-black tracking-tight text-white leading-tight">Coaching</h2>
-                <span className="text-xs font-serif italic text-amber-200 tracking-wider block my-0.5">
-                  Rate Card
+                <span className="text-xs font-serif italic text-emerald-300 tracking-wider block mb-1">
+                  Official Rate Card
                 </span>
-                <p className="text-xs font-semibold text-amber-100">
-                  Indoor Tennis Court <span className="text-[11px] text-amber-200/80 italic font-normal">at The Racket Club</span>
+                <h2 className="text-2xl font-black tracking-tight text-white leading-tight">Coaching Basecamp</h2>
+                <p className="text-xs font-semibold text-emerald-100 mt-0.5">
+                  Kosek, Emerald & Karya
                 </p>
               </div>
 
-              {/* Court Accent Image Preview (h-44) */}
-              <div
-                onClick={() =>
-                  setModalImage({
-                    src: '/images/ratecard-racketclub.png',
-                    title: 'Rate Card: Coaching at The Racket Club Indoor',
-                  })
-                }
-                className="w-full h-44 rounded-2xl overflow-hidden shadow-inner relative my-5 border-2 border-white/20 cursor-pointer group shrink-0"
-              >
-                <img
-                  src="/images/ratecard-racketclub.png"
-                  alt="Rate Card The Racket Club"
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow-md">
-                    <HiEye className="w-4 h-4 text-amber-800" />
-                    Lihat Scan Asli
-                  </span>
-                </div>
+              {/* Card Badge Note */}
+              <div className="my-5 p-4 rounded-2xl bg-white/10 border border-white/15 text-xs text-emerald-100 leading-relaxed">
+                <p className="font-bold text-white mb-1">Fasilitas Lapangan Resmi Termasuk:</p>
+                <p>
+                  Berlatih di home basecamp Volta (Kosek, Emerald, Karya). Member juga dapat bermain di Out Basecamp jika diinginkan (biaya lapangan luar ditanggung pribadi).
+                </p>
               </div>
 
-              {/* Price Table (min-h-[250px]) */}
-              <div className="space-y-2.5 text-xs pb-4 border-b border-white/15 min-h-[250px] flex flex-col justify-between shrink-0">
-                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-amber-200">
+              {/* Price Table */}
+              <div className="space-y-3 text-xs pb-4 border-b border-white/15 flex-1 flex flex-col justify-center">
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-emerald-200">
                   <span>Kategori Pelatihan</span>
                   <span>1 Sesi / 10 Sesi</span>
                 </div>
 
-                {/* 1 player 1 coach */}
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center py-1.5 border-b border-white/10">
                   <div>
-                    <strong className="block text-amber-200 text-xs">1 player 1 coach</strong>
-                    <span className="text-[10px] text-amber-100/70">60 mins / session</span>
+                    <strong className="block text-white text-xs">1 Player 1 Coach</strong>
+                    <span className="text-[10px] text-emerald-200/80">60 Menit Privat</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-black text-white text-xs">250k</span>
-                    <span className="text-amber-200/80 text-[11px] ml-2">2.300k</span>
+                    <span className="font-black text-white text-xs block">Rp 285.000</span>
+                    <span className="text-[10px] text-emerald-300">10x: Rp 2.650.000</span>
                   </div>
                 </div>
 
-                {/* 2 players 1 coach */}
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center py-1.5">
                   <div>
-                    <strong className="block text-amber-200 text-xs">2 players 1 coach</strong>
-                    <span className="text-[10px] text-amber-100/70">60 mins / session</span>
+                    <strong className="block text-white text-xs">2 Players 1 Coach</strong>
+                    <span className="text-[10px] text-emerald-200/80">Semi-Privat 2 Orang</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-black text-white text-xs">300k</span>
-                    <span className="text-amber-200/80 text-[11px] ml-2">2.800k</span>
+                    <span className="font-black text-white text-xs block">Rp 350.000</span>
+                    <span className="text-[10px] text-emerald-300">10x: Rp 3.200.000</span>
                   </div>
                 </div>
 
-                {/* 2 players 2 coaches */}
-                <div className="flex justify-between items-center">
-                  <div>
-                    <strong className="block text-amber-200 text-xs">2 players 2 coaches</strong>
-                    <span className="text-[10px] text-amber-100/70">60 mins / session</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-black text-white text-xs">450k</span>
-                    <span className="text-amber-200/80 text-[11px] ml-2">4.300k</span>
-                  </div>
+                <div className="pt-3 text-[11px] text-emerald-200/80 space-y-1">
+                  <p>&bull; Masa berlaku paket 10 sesi adalah 1 tahun.</p>
+                  <p>&bull; 1 lapangan basecamp berkapasitas maks. 2 sesi bersamaan.</p>
                 </div>
-
-                {/* 3 players 2 coaches */}
-                <div className="flex justify-between items-center">
-                  <div>
-                    <strong className="block text-amber-200 text-xs">3 players 2 coaches</strong>
-                    <span className="text-[10px] text-amber-100/70">60 mins / session</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-black text-white text-xs">550k</span>
-                    <span className="text-amber-200/80 text-[11px] ml-2">5.300k</span>
-                  </div>
-                </div>
-
-                {/* Young coach */}
-                <div className="flex justify-between items-center pt-1.5 border-t border-white/10">
-                  <div>
-                    <strong className="block text-amber-200 text-xs">Young coach</strong>
-                    <span className="text-[10px] text-amber-100/70">60 mins / session</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-black text-white text-xs">175k</span>
-                    <span className="text-amber-200/80 text-[11px] ml-2">1.500k</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ketentuan / Notes (Alami, Tanpa Ketinggian Kaku, Tidak Ada yang Terpotong) */}
-              <div className="pt-3.5 text-[11px] leading-relaxed text-amber-100/90 space-y-1.5 flex-1">
-                <p>• Packages valid for 1 year after purchase.</p>
-                <p>• Payment in advance, no refund cancellation.</p>
-                <p>• 20x sessions: discount 5%.</p>
-                <p className="text-amber-200 font-bold">• Court add-on: 200k/session (The Racket Club Indoor).</p>
               </div>
             </div>
 
-            {/* Bottom Section: CTA + Footer */}
+            {/* Bottom CTA */}
             <div className="pt-5 border-t border-white/15 shrink-0 space-y-3 mt-4">
               <Link
-                to="/dashboard/booking"
-                className="w-full block text-center py-3 rounded-xl bg-white text-[#5E4430] font-black text-xs hover:bg-amber-50 transition-colors shadow-xs"
+                to="/dashboard/booking?action=order&packageId=rc_basecamp_1p_1c_single"
+                className="w-full block text-center py-3 rounded-xl bg-emerald-300 text-emerald-950 font-black text-xs hover:bg-emerald-200 transition-colors shadow-xs"
               >
-                Pesan Sesi Indoor
+                Pilih Paket Basecamp & Lanjut
               </Link>
-              <div className="flex items-center justify-between text-[11px] text-amber-200/80 pt-1">
+              <div className="flex items-center justify-between text-[11px] text-emerald-200/80 pt-1">
                 <span>@voltatennisclub</span>
                 <span className="font-mono">0821 7693 8986</span>
               </div>
@@ -340,134 +229,86 @@ const RateCardPage = () => {
         )}
 
         {/* ========================================================
-            KARTU 3: OUR BASECAMP (FOREST GREEN & CORAL #2A4032)
+            KARTU 3: COACHING OUT BASECAMP (DEEP PURPLE #4A2E4B)
             ======================================================== */}
-        {(activeTab === 'all' || activeTab === 'basecamp') && (
-          <div className="rounded-3xl bg-[#2A4032] text-[#FAF8F5] p-7 shadow-xl relative flex flex-col justify-between border border-[#3A5643] h-full min-h-[860px]">
+        {(activeTab === 'all' || activeTab === 'out_basecamp') && (
+          <div className="rounded-3xl bg-[#4A2E4B] text-[#FAF8F5] p-7 shadow-xl relative flex flex-col justify-between border border-[#5F3B60] h-full min-h-[820px]">
             <div className="flex-1 flex flex-col">
-              {/* Header Seragam (h-24) */}
+              {/* Header Seragam */}
               <div className="text-center pb-4 border-b border-white/15 h-24 flex flex-col justify-center shrink-0">
-                <h2 className="text-2xl font-black tracking-tight text-white leading-tight">Coaching</h2>
-                <span className="text-xs font-serif italic text-[#F7B0B7] tracking-wider block my-0.5">
-                  Rate Card
+                <span className="text-xs font-serif italic text-purple-200 tracking-wider block mb-1">
+                  Official Rate Card
                 </span>
-                <p className="text-xs font-semibold text-emerald-100">
-                  Our Basecamp <span className="text-[11px] text-emerald-200/80 italic font-normal">at Kosek Polonia, Karya & Emerald</span>
+                <h2 className="text-2xl font-black tracking-tight text-white leading-tight">Coaching Out Basecamp</h2>
+                <p className="text-xs font-semibold text-purple-200 mt-0.5">
+                  Khusus Lapangan Pilihan Anda
                 </p>
               </div>
 
-              {/* Court Accent Image Preview (h-44) */}
-              <div
-                onClick={() =>
-                  setModalImage({
-                    src: '/images/ratecard-basecamp.png',
-                    title: 'Rate Card: Basecamp Kosek Polonia, Karya & Emerald',
-                  })
-                }
-                className="w-full h-44 rounded-2xl overflow-hidden shadow-inner relative my-5 border-2 border-white/20 cursor-pointer group shrink-0"
-              >
-                <img
-                  src="/images/ratecard-basecamp.png"
-                  alt="Rate Card Basecamp Kosek Polonia"
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow-md">
-                    <HiEye className="w-4 h-4 text-emerald-800" />
-                    Lihat Scan Asli
-                  </span>
-                </div>
-              </div>
-
-              {/* Price Table with IN vs OUT Basecamp (min-h-[250px]) */}
-              <div className="space-y-2.5 text-xs pb-4 border-b border-white/15 min-h-[250px] flex flex-col justify-between shrink-0">
-                <div className="grid grid-cols-12 text-[10px] font-bold uppercase tracking-wider text-emerald-200 text-right">
-                  <span className="col-span-6 text-left">Kategori</span>
-                  <span className="col-span-3">In Base</span>
-                  <span className="col-span-3">Out Base</span>
-                </div>
-
-                {/* 1 player 1 coach */}
-                <div className="grid grid-cols-12 items-center text-xs">
-                  <div className="col-span-6">
-                    <strong className="block text-[#F7B0B7] text-xs">1 player 1 coach</strong>
-                    <span className="text-[10px] text-emerald-100/70">Single (60m) / 10x</span>
-                  </div>
-                  <div className="col-span-3 text-right">
-                    <span className="font-black text-white text-xs block">285k</span>
-                    <span className="text-[10px] text-emerald-200/80">2.650k</span>
-                  </div>
-                  <div className="col-span-3 text-right">
-                    <span className="font-black text-white text-xs block">250k</span>
-                    <span className="text-[10px] text-emerald-200/80">2.300k</span>
-                  </div>
-                </div>
-
-                {/* 2 players 1 coach */}
-                <div className="grid grid-cols-12 items-center text-xs">
-                  <div className="col-span-6">
-                    <strong className="block text-[#F7B0B7] text-xs">2 players 1 coach</strong>
-                    <span className="text-[10px] text-emerald-100/70">Single (60m) / 10x</span>
-                  </div>
-                  <div className="col-span-3 text-right">
-                    <span className="font-black text-white text-xs block">350k</span>
-                    <span className="text-[10px] text-emerald-200/80">3.300k</span>
-                  </div>
-                  <div className="col-span-3 text-right">
-                    <span className="font-black text-white text-xs block">300k</span>
-                    <span className="text-[10px] text-emerald-200/80">2.800k</span>
-                  </div>
-                </div>
-
-                {/* 3 players 2 coaches */}
-                <div className="grid grid-cols-12 items-center text-xs">
-                  <div className="col-span-6">
-                    <strong className="block text-[#F7B0B7] text-xs">3 players 2 coaches</strong>
-                    <span className="text-[10px] text-emerald-100/70">Single (60m) / 10x</span>
-                  </div>
-                  <div className="col-span-3 text-right">
-                    <span className="font-black text-white text-xs block">575k</span>
-                    <span className="text-[10px] text-emerald-200/80">5.550k</span>
-                  </div>
-                  <div className="col-span-3 text-right">
-                    <span className="font-black text-white text-xs block">550k</span>
-                    <span className="text-[10px] text-emerald-200/80">5.300k</span>
-                  </div>
-                </div>
-
-                {/* Young coach */}
-                <div className="grid grid-cols-12 items-center text-xs pt-1.5 border-t border-white/10">
-                  <div className="col-span-6">
-                    <strong className="block text-[#F7B0B7] text-xs">Young coach (60m)</strong>
-                    <span className="text-[10px] text-emerald-100/70">Ramah pemula</span>
-                  </div>
-                  <div className="col-span-6 text-right">
-                    <span className="font-black text-white text-xs">175k</span>
-                    <span className="text-[10px] text-emerald-200/80 block">Single Visit</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rain Policy & Terms (Alami, Tanpa Ketinggian Kaku, Tidak Ada yang Terpotong) */}
-              <div className="pt-3.5 text-[11px] leading-relaxed text-emerald-100/90 space-y-1.5 flex-1">
-                <p>• Packages valid for 1 year after purchase • Disc 5% for 20x sessions.</p>
-                <p>• Rain Policy: &lt;15 min free • 15–30 min half • &gt;30 min full.</p>
-                <p className="text-emerald-200 italic">
-                  * Your coach will confirm your playtime and report it for billing.
+              {/* Card Badge Note */}
+              <div className="my-5 p-4 rounded-2xl bg-white/10 border border-white/15 text-xs text-purple-100 leading-relaxed">
+                <p className="font-bold text-white mb-1">Khusus Lapangan Luar Member:</p>
+                <p>
+                  Pelatih Volta hadir ke lapangan pilihan Anda. Tidak berlaku di Basecamp Volta. Biaya sewa lapangan luar ditanggung oleh member.
                 </p>
-                <p className="text-emerald-200 font-semibold">• Lapangan outdoor disiapkan & diatur manajemen Volta.</p>
+              </div>
+
+              {/* Price Table */}
+              <div className="space-y-3 text-xs pb-4 border-b border-white/15 flex-1 flex flex-col justify-center">
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-purple-200">
+                  <span>Kategori Pelatihan</span>
+                  <span>1 Sesi / 10 Sesi</span>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                  <div>
+                    <strong className="block text-white text-xs">1 Player 1 Coach</strong>
+                    <span className="text-[10px] text-purple-200/80">60 Menit Privat Luar</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-white text-xs block">Rp 250.000</span>
+                    <span className="text-[10px] text-purple-300">10x: Rp 2.300.000</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                  <div>
+                    <strong className="block text-white text-xs">2 Players 1 Coach</strong>
+                    <span className="text-[10px] text-purple-200/80">Semi-Privat 2 Orang</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-white text-xs block">Rp 300.000</span>
+                    <span className="text-[10px] text-purple-300">10x: Rp 2.800.000</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center py-1.5">
+                  <div>
+                    <strong className="block text-white text-xs">Young Coach</strong>
+                    <span className="text-[10px] text-purple-200/80">Ramah Pemula & Junior</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-white text-xs block">Rp 175.000</span>
+                    <span className="text-[10px] text-purple-300">10x: Rp 1.500.000</span>
+                  </div>
+                </div>
+
+                <div className="pt-3 text-[11px] text-purple-200/80 space-y-1">
+                  <p>&bull; Wajib mencantumkan nama dan alamat lapangan saat jadwal.</p>
+                  <p>&bull; Masa berlaku paket 10 sesi adalah 1 tahun.</p>
+                </div>
               </div>
             </div>
 
-            {/* Bottom Section: CTA + Footer */}
+            {/* Bottom CTA */}
             <div className="pt-5 border-t border-white/15 shrink-0 space-y-3 mt-4">
               <Link
-                to="/dashboard/coaches"
-                className="w-full block text-center py-3 rounded-xl bg-[#F7B0B7] text-[#1B2F22] font-black text-xs hover:bg-[#ffc2c8] transition-colors shadow-xs"
+                to="/dashboard/booking?action=order&packageId=rc_outbasecamp_1p_1c_single"
+                className="w-full block text-center py-3 rounded-xl bg-purple-200 text-purple-950 font-black text-xs hover:bg-purple-100 transition-colors shadow-xs"
               >
-                Pilih Pelatih Basecamp
+                Pilih Paket Out Basecamp & Lanjut
               </Link>
-              <div className="flex items-center justify-between text-[11px] text-emerald-200/80 pt-1">
+              <div className="flex items-center justify-between text-[11px] text-purple-200/80 pt-1">
                 <span>@voltatennisclub</span>
                 <span className="font-mono">0821 7693 8986</span>
               </div>
@@ -475,54 +316,6 @@ const RateCardPage = () => {
           </div>
         )}
       </div>
-
-      {/* ========================================================
-          MODAL LIGHTBOX PERBESAR GAMBAR ASLI
-          ======================================================== */}
-      {modalImage && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setModalImage(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 cursor-zoom-out"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-lg w-full bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-white/20 cursor-default"
-          >
-            <div className="p-4 bg-slate-950/80 border-b border-white/10 flex items-center justify-between">
-              <p className="font-bold text-white text-xs sm:text-sm truncate pr-4">
-                {modalImage.title}
-              </p>
-              <button
-                onClick={() => setModalImage(null)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-                aria-label="Tutup"
-              >
-                <HiXMark className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="max-h-[75vh] overflow-y-auto bg-black flex items-center justify-center p-2">
-              <img
-                src={modalImage.src}
-                alt={modalImage.title}
-                className="w-full h-auto object-contain rounded-xl"
-              />
-            </div>
-
-            <div className="p-4 bg-slate-950/80 border-t border-white/10 flex items-center justify-between gap-3">
-              <span className="text-[11px] text-slate-400">Scan dokumen resmi Volta</span>
-              <button
-                onClick={() => setModalImage(null)}
-                className="px-4 py-1.5 bg-white text-slate-900 font-bold text-xs rounded-xl hover:bg-slate-100 transition-colors"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

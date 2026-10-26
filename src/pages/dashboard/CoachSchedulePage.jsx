@@ -109,8 +109,12 @@ const CoachSchedulePage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Jadwal Ketersediaan</h1>
-          <p className="text-gray-500 mt-1">Atur jam kerja Anda agar member bisa memilih Anda sebagai pelatih.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Jadwal Ketersediaan
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            Atur jam kerja Anda agar member bisa memilih Anda sebagai pelatih.
+          </p>
         </div>
         <Button icon={HiPlus} onClick={() => setModalOpen(true)}>
           Tambah Jadwal

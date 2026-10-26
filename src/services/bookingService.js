@@ -20,15 +20,25 @@ const COLLECTION = 'bookings';
 
 /**
  * Buat sesi pelatihan baru bersama Coach.
- * Lapangan TIDAK dipilih customer, melainkan akan ditentukan oleh Admin.
+ * Member menentukan lapangan: Lapangan Basecamp (Kosek 1/2, Emerald, Karya)
+ * atau Lapangan Out Basecamp (dengan deskripsi nama/alamat).
  */
 export const createBooking = async (bookingData) => {
-  const { coachId, coachName, date, startTime, endTime } = bookingData;
+  const {
+    coachId,
+    coachName,
+    date,
+    startTime,
+    endTime,
+    courtType = 'basecamp',
+    courtId,
+    courtName,
+  } = bookingData;
 
   return await runTransaction(db, async (transaction) => {
     const bookingsRef = collection(db, COLLECTION);
 
-    // Cek apakah Coach sudah ada jadwal latihan di tanggal dan jam yang sama
+    // 1. Cek bentrok pelatih: Pelatih tidak bisa mengajar 2 sesi pada jam yang sama
     if (coachId) {
       const coachQuery = query(
         bookingsRef,
@@ -49,15 +59,63 @@ export const createBooking = async (bookingData) => {
           `Pelatih ${coachName || ''} sudah memiliki sesi latihan pada jam ${startTime} - ${endTime}. Silakan pilih jam lain.`
         );
       }
+
+      // 1b. Cek kontinuitas lapangan untuk sesi berurutan (Consecutive Sessions):
+      // Jika coach yang sama memiliki sesi tepat sebelum (booking.endTime === startTime)
+      // atau tepat sesudah (booking.startTime === endTime):
+      // Lapangan HARUS SAMA. Jika di lapangan berbeda, tolak pemesanan karena pelatih tidak bisa pindah tempat tanpa jeda.
+      const adjacentSessionDifferentCourt = existingCoachBookings.find((booking) => {
+        const isAdjacentBefore = booking.endTime === startTime;
+        const isAdjacentAfter = booking.startTime === endTime;
+        if (!isAdjacentBefore && !isAdjacentAfter) return false;
+
+        const bCourtType = booking.courtType || (booking.courtId === 'out_basecamp' ? 'out_basecamp' : 'basecamp');
+        const reqCourtType = courtType || (courtId === 'out_basecamp' ? 'out_basecamp' : 'basecamp');
+
+        const sameCourt =
+          reqCourtType === 'basecamp' && bCourtType === 'basecamp'
+            ? booking.courtId === courtId
+            : reqCourtType === 'out_basecamp' && bCourtType === 'out_basecamp'
+              ? (booking.courtName || '').trim().toLowerCase() === (courtName || '').trim().toLowerCase()
+              : false;
+
+        return !sameCourt;
+      });
+
+      if (adjacentSessionDifferentCourt) {
+        throw new Error(
+          `Pelatih ${coachName || ''} memiliki sesi latihan di "${adjacentSessionDifferentCourt.courtName || 'lapangan lain'}" pada jam ${adjacentSessionDifferentCourt.startTime} - ${adjacentSessionDifferentCourt.endTime}. Sesi berurutan dengan pelatih yang sama wajib dilakukan di lapangan yang sama.`
+        );
+      }
     }
 
-    // Jika tidak ada konflik pada pelatih, buat pemesanan sesi latihan
+    // 2. Cek kapasitas lapangan Basecamp (Maksimal 2 sesi bersamaan per lapangan)
+    // Sesuai aturan: 1 lapangan bisa dipakai oleh 2 coach berbeda dan 2 member berbeda
+    if (courtType === 'basecamp' && courtId) {
+      const courtQuery = query(
+        bookingsRef,
+        where('courtId', '==', courtId),
+        where('date', '==', date),
+        where('status', '==', BOOKING_STATUS.CONFIRMED)
+      );
+
+      const courtSnapshot = await getDocs(courtQuery);
+      const existingCourtBookings = courtSnapshot.docs
+        .map((d) => d.data())
+        .filter((b) => isTimeOverlap(startTime, endTime, b.startTime, b.endTime));
+
+      if (existingCourtBookings.length >= 2) {
+        throw new Error(
+          `Lapangan "${courtName}" sudah mencapai kapasitas maksimal (2 sesi latihan bersamaan) pada jam ${startTime} - ${endTime}. Silakan pilih lapangan lain atau jam lain.`
+        );
+      }
+    }
+
+    // Buat pemesanan sesi latihan dengan lapangan yang sudah ditentukan member
     const newBookingRef = doc(collection(db, COLLECTION));
     transaction.set(newBookingRef, {
       ...bookingData,
-      courtId: bookingData.courtId || null,
-      courtName: bookingData.courtName || 'Menunggu Penugasan Admin',
-      courtStatus: bookingData.courtId ? 'assigned' : 'unassigned',
+      courtStatus: 'assigned',
       status: BOOKING_STATUS.CONFIRMED,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -69,11 +127,11 @@ export const createBooking = async (bookingData) => {
 
 /**
  * Admin menugaskan / menentukan lapangan untuk suatu sesi latihan.
- * Memeriksa apakah lapangan tersebut sudah dipakai sesi lain di jam yang sama.
+ * Memeriksa kapasitas lapangan (maksimal 2 sesi latihan bersamaan untuk lapangan basecamp).
  */
 export const assignCourtToBooking = async (bookingId, courtId, courtName, date, startTime, endTime, adminUid = null) => {
   return await runTransaction(db, async (transaction) => {
-    // Cek apakah lapangan bentrok dengan sesi lain yang sudah ditugaskan
+    // Cek apakah lapangan basecamp sudah mencapai kapasitas maks (2 sesi bersamaan)
     const bookingsRef = collection(db, COLLECTION);
     const courtQuery = query(
       bookingsRef,
@@ -87,13 +145,13 @@ export const assignCourtToBooking = async (bookingId, courtId, courtName, date, 
       .filter((d) => d.id !== bookingId)
       .map((d) => d.data());
 
-    const conflict = existingCourtBookings.find((b) =>
+    const overlappingBookings = existingCourtBookings.filter((b) =>
       isTimeOverlap(startTime, endTime, b.startTime, b.endTime)
     );
 
-    if (conflict) {
+    if (overlappingBookings.length >= 2) {
       throw new Error(
-        `Lapangan "${courtName}" sudah digunakan untuk sesi lain pada jam ${conflict.startTime} - ${conflict.endTime}. Silakan pilih lapangan lain.`
+        `Lapangan "${courtName}" sudah mencapai batas maksimal 2 sesi latihan pada jam ${startTime} - ${endTime}. Silakan pilih lapangan lain.`
       );
     }
 

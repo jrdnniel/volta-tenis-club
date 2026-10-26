@@ -338,56 +338,56 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Kartu 2: THE RACKET CLUB INDOOR (Brown) */}
-            <div className="reveal-scale delay-200 rounded-3xl bg-[#5E4430] text-[#FAF7F0] p-7 shadow-xl flex flex-col justify-between border border-[#75573F] relative overflow-hidden group h-[640px] hover:shadow-2xl transition-all duration-300">
+            {/* Kartu 2: COACHING OUT BASECAMP */}
+            <div className="reveal-scale delay-200 rounded-3xl bg-[#4A2E4B] text-[#FAF7F0] p-7 shadow-xl flex flex-col justify-between border border-[#643C65] relative overflow-hidden group h-[640px] hover:shadow-2xl transition-all duration-300">
               <div>
                 <div className="text-center pb-3 border-b border-white/15 h-16 flex flex-col justify-center">
                   <span className="text-[11px] uppercase tracking-widest text-[#E8D0BE] font-semibold block leading-none mb-1">
                     Coaching Rate Card
                   </span>
                   <h3 className="text-2xl font-black text-white tracking-tight leading-tight">
-                    The Racket Club
+                    Out Basecamp
                   </h3>
-                  <p className="text-[11px] text-[#E8D0BE]/80 leading-none mt-0.5">Indoor Tennis Court</p>
+                  <p className="text-[11px] text-[#E8D0BE]/80 leading-none mt-0.5">Lapangan Pilihan Member</p>
                 </div>
 
                 <div className="my-4 h-44 rounded-2xl overflow-hidden bg-black/40 border border-white/20 relative group-hover:scale-[1.02] transition-transform shrink-0">
                   <img
                     src="/images/ratecard-racketclub.png"
-                    alt="Rate Card The Racket Club"
+                    alt="Rate Card Out Basecamp"
                     className="w-full h-full object-cover object-top"
                   />
                   <div
                     onClick={() =>
                       handleOpenRateCard(
                         '/images/ratecard-racketclub.png',
-                        'Rate Card: Coaching at The Racket Club Indoor'
+                        'Rate Card: Coaching Out Basecamp'
                       )
                     }
                     className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                   >
                     <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-900 text-xs font-bold flex items-center gap-1.5 shadow-md">
-                      <HiEye className="w-4 h-4 text-amber-700" />
+                      <HiEye className="w-4 h-4 text-purple-700" />
                       Perbesar Brosur
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-[#F8EFE9]/90 leading-relaxed min-h-[140px] flex flex-col justify-between">
-                  <p className="font-bold text-sm text-white">Fullcourt Indoor Session</p>
+                  <p className="font-bold text-sm text-white">Fullcourt Out Basecamp Session</p>
                   <p>• 1 Player 1 Coach: 250k (Single) / 2.300k (10 Sesi)</p>
                   <p>• 2 Players 1 Coach: 300k (Single) / 2.800k (10 Sesi)</p>
                   <p>• Young Coach: 175k (Single) / 1.500k (10 Sesi)</p>
-                  <p className="text-amber-200 font-medium">✓ Paket valid 1 tahun · Diskon 5% untuk 20x sesi</p>
+                  <p className="text-amber-200 font-medium">✓ Khusus lapangan pilihan sendiri (biaya lapangan di luar Volta)</p>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-white/15 shrink-0">
                 <Link
                   to="/dashboard/booking"
-                  className="w-full block text-center py-3 rounded-xl bg-white text-[#5E4430] font-black text-xs hover:bg-amber-50 transition-colors shadow-xs"
+                  className="w-full block text-center py-3 rounded-xl bg-white text-[#4A2E4B] font-black text-xs hover:bg-purple-50 transition-colors shadow-xs"
                 >
-                  Pesan Sesi Indoor
+                  Pesan Sesi Out Basecamp
                 </Link>
               </div>
             </div>
@@ -561,8 +561,8 @@ const LandingPage = () => {
                     Emerald Court
                   </span>
                   <span className="bg-slate-900/90 px-3.5 py-2.5 rounded-xl border border-stone-800 flex items-center gap-1.5">
-                    <HiMapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                    The Racket Club (Indoor)
+                    <HiMapPin className="w-4 h-4 text-purple-400 shrink-0" />
+                    Out Basecamp (Pilihan Member)
                   </span>
                 </div>
               </div>

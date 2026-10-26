@@ -192,8 +192,10 @@ const CoachesPage = () => {
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Kelola Pelatih & Tarif</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          Kelola Pelatih & Tarif
+        </h1>
+        <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
           Atur harga tarif per jam, kelola profil, dan pantau jadwal latihan pelatih agar tidak terjadi bentrok.
         </p>
       </div>

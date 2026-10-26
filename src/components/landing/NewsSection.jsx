@@ -34,7 +34,7 @@ const newsArticles = [
         },
         {
           heading: 'Lokasi & Penugasan Lapangan',
-          text: 'Babak penyisihan berlangsung di Basecamp Outdoor Kosek Polonia & Karya, sedangkan babak semifinal dan final akan dihelat di Indoor Court The Racket Club untuk menjamin kenyamanan maksimal tanpa terkendala cuaca.',
+          text: 'Babak penyisihan berlangsung di Basecamp Kosek Polonia & Karya, sedangkan babak semifinal dan final akan dihelat di Lapangan Emerald untuk menjamin kenyamanan maksimal kompetisi.',
         },
         {
           heading: 'Hadiah & Merchandise Spesial',
@@ -101,8 +101,8 @@ const newsArticles = [
           text: 'Pemberitahuan ramah: Seluruh member tidak perlu memikirkan reservasi lapangan sendiri. Saat Anda memesan pelatih atau sesi hitting, tim Admin Volta akan langsung menetapkan lapangan terbaik sesuai jadwal pilihan Anda.',
         },
         {
-          heading: 'Jadwal The Racket Club (Indoor)',
-          text: 'Buka setiap hari mulai pukul 06:00 hingga 22:00. Pilihan favorit untuk latihan tanpa terpengaruh cuaca hujan.',
+          heading: 'Jadwal Basecamp & Out Basecamp',
+          text: 'Basecamp Volta buka setiap hari mulai pukul 06:00 hingga 22:00. Tersedia juga opsi Out Basecamp jika Anda ingin berlatih di lapangan pilihan Anda sendiri.',
         },
         {
           heading: 'Rain Policy Lapangan Terbuka',

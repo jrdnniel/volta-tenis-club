@@ -18,23 +18,26 @@ import {
 } from 'react-icons/hi2';
 
 export default function NotificationBell() {
-  const { userProfile, currentUser, isAdmin } = useAuth();
+  const { userProfile, currentUser, isAdmin, isCoach } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Hanya tampilkan dan dengarkan notifikasi untuk role Admin
-  useEffect(() => {
-    if (!isAdmin) return;
+  const targetRole = isAdmin ? 'admin' : (isCoach ? 'coach' : 'member');
+  const userId = currentUser?.uid;
 
-    const unsubscribe = subscribeToNotifications('admin', (data) => {
+  // Dengarkan notifikasi secara real-time berdasarkan role & userId
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const unsubscribe = subscribeToNotifications(targetRole, (data) => {
       setNotifications(data);
-    });
+    }, userId);
 
     return () => unsubscribe && unsubscribe();
-  }, [isAdmin]);
+  }, [currentUser, targetRole, userId]);
 
   // Klik di luar dropdown untuk menutup
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  if (!isAdmin) return null;
+  if (!currentUser) return null;
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -57,9 +60,14 @@ export default function NotificationBell() {
     if (!notif.read) {
       await markNotificationAsRead(notif.id);
     }
-    if (notif.bookingId) {
-      setIsOpen(false);
+    setIsOpen(false);
+
+    if (notif.link || notif.metadata?.link) {
+      navigate(notif.link || notif.metadata?.link);
+    } else if (isAdmin && notif.bookingId) {
       navigate('/dashboard/all-bookings');
+    } else if (!isAdmin) {
+      navigate('/dashboard/booking');
     }
   };
 
@@ -80,7 +88,7 @@ export default function NotificationBell() {
   };
 
   const handleMarkAllRead = async () => {
-    await markAllNotificationsAsRead('admin');
+    await markAllNotificationsAsRead(targetRole, userId);
   };
 
   const formatTimeAgo = (date) => {
@@ -101,7 +109,7 @@ export default function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
-        title="Notifikasi Laporan & Sesi"
+        title="Notifikasi"
         aria-label="Notifikasi"
       >
         <HiBell className="w-5 h-5" />
@@ -118,7 +126,9 @@ export default function NotificationBell() {
           {/* Header Panel */}
           <div className="flex items-center justify-between px-4 pb-2.5 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-sm">Notifikasi Admin</span>
+              <span className="font-bold text-slate-900 text-sm">
+                {isAdmin ? 'Notifikasi Admin' : 'Notifikasi Anda'}
+              </span>
               {unreadCount > 0 && (
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                   {unreadCount} baru
@@ -144,7 +154,9 @@ export default function NotificationBell() {
                 </div>
                 <p className="text-xs font-semibold text-slate-700">Belum Ada Notifikasi</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Laporan penyelesaian latihan dari coach akan muncul seketika di sini.
+                  {isAdmin
+                    ? 'Laporan penyelesaian latihan dari coach dan verifikasi akan muncul di sini.'
+                    : 'Pengingat paket latihan, info sesi, dan pengumuman klub akan muncul di sini.'}
                 </p>
               </div>
             ) : (
@@ -156,8 +168,16 @@ export default function NotificationBell() {
                     !notif.read ? 'bg-emerald-50/40' : ''
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-xl bg-[#163D2B] text-emerald-300 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                    <HiCheckCircle className="w-4 h-4 text-emerald-300" />
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs mt-0.5 ${
+                    notif.type === 'PACKAGE_EXPIRING'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-[#163D2B] text-emerald-300'
+                  }`}>
+                    {notif.type === 'PACKAGE_EXPIRING' ? (
+                      <span className="text-sm">⚠️</span>
+                    ) : (
+                      <HiCheckCircle className="w-4 h-4 text-emerald-300" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1 mb-0.5">
@@ -172,8 +192,8 @@ export default function NotificationBell() {
                       {notif.message}
                     </p>
 
-                    {/* Quick Action Button: Konfirmasi Langsung */}
-                    {notif.type === 'COACH_SESSION_COMPLETED' && notif.bookingId && (
+                    {/* Quick Action Button: Konfirmasi Langsung untuk Admin */}
+                    {isAdmin && notif.type === 'COACH_SESSION_COMPLETED' && notif.bookingId && (
                       <div className="flex items-center gap-2 mt-1.5">
                         <button
                           onClick={(e) => handleConfirmDirectly(e, notif)}
@@ -190,6 +210,15 @@ export default function NotificationBell() {
                         </span>
                       </div>
                     )}
+
+                    {/* Quick Link untuk Member */}
+                    {!isAdmin && (notif.link || notif.metadata?.link) && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 hover:underline">
+                          Lihat Rate Card / Perpanjang &rarr;
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -198,15 +227,27 @@ export default function NotificationBell() {
 
           {/* Footer Panel */}
           <div className="border-t border-slate-100 px-4 pt-2.5 text-center">
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                navigate('/dashboard/all-bookings');
-              }}
-              className="text-xs font-bold text-emerald-800 hover:text-emerald-950 transition-colors"
-            >
-              Buka Semua Sesi Latihan &rarr;
-            </button>
+            {isAdmin ? (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/dashboard/all-bookings');
+                }}
+                className="text-xs font-bold text-emerald-800 hover:text-emerald-950 transition-colors"
+              >
+                Buka Semua Sesi Latihan &rarr;
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/dashboard/rate-card');
+                }}
+                className="text-xs font-bold text-emerald-800 hover:text-emerald-950 transition-colors"
+              >
+                Lihat Rate Card & Pesan Paket &rarr;
+              </button>
+            )}
           </div>
         </div>
       )}

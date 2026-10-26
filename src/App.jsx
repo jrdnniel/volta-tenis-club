@@ -158,7 +158,7 @@ function App() {
         <Route
           path="coach-schedule"
           element={
-            <RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.COACH]}>
+            <RoleRoute allowedRoles={[ROLES.COACH]}>
               <CoachSchedulePage />
             </RoleRoute>
           }

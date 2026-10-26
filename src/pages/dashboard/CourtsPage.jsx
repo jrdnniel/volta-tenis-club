@@ -177,8 +177,10 @@ const CourtsPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Kelola Lapangan</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Kelola Lapangan
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
             Tambah dan kelola lapangan tenis klub untuk penugasan sesi latihan.
           </p>
         </div>
@@ -240,6 +242,84 @@ const CourtsPage = () => {
         </Card>
       </div>
 
+      {/* Kebijakan 2 Jenis Lapangan di Volta Tenis Club */}
+      <div className="bg-gradient-to-r from-slate-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-7 shadow-lg relative overflow-hidden">
+        <div className="relative z-10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-400/30">
+                Sistem Lapangan Volta Tenis Club
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-2">
+                2 Jenis Lapangan: Basecamp & Out Basecamp
+              </h2>
+            </div>
+            <span className="text-xs font-semibold text-emerald-200">
+              Member yang menentukan lapangan saat menjadwalkan sesi
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {/* 1. Lapangan Basecamp */}
+            <div className="bg-white/10 rounded-2xl p-4 border border-white/15 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🏟️</span>
+                <h3 className="font-extrabold text-sm sm:text-base text-white">
+                  1. Lapangan Basecamp (3 Tempat, 4 Court)
+                </h3>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                Volta menyediakan 3 lokasi basecamp resmi dengan total 4 lapangan tenis:
+              </p>
+              <ul className="text-xs text-emerald-200 space-y-1.5 list-disc list-inside">
+                <li>
+                  <strong>Lapangan Kosek:</strong> Memiliki 2 lapangan (Court 1 & Court 2).
+                </li>
+                <li>
+                  <strong>Lapangan Emerald:</strong> Memiliki 1 lapangan (Court 1).
+                </li>
+                <li>
+                  <strong>Lapangan Karya:</strong> Memiliki 1 lapangan (Court 1).
+                </li>
+              </ul>
+              <div className="pt-2 border-t border-white/10 text-[11px] text-amber-300 font-semibold flex items-center gap-1.5">
+                <span>💡 Aturan Kapasitas:</span>
+                <span>
+                  1 lapangan dapat dipakai oleh 2 coach berbeda dan 2 member berbeda secara bersamaan.
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Lapangan Out Basecamp */}
+            <div className="bg-white/10 rounded-2xl p-4 border border-white/15 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📍</span>
+                <h3 className="font-extrabold text-sm sm:text-base text-white">
+                  2. Lapangan Out Basecamp
+                </h3>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                Member dapat memilih lapangan lain di luar fasilitas yang disediakan oleh Volta:
+              </p>
+              <ul className="text-xs text-purple-200 space-y-1.5 list-disc list-inside">
+                <li>Member bebas menentukan lokasi lapangan luar yang diinginkan.</li>
+                <li>
+                  <strong>Wajib:</strong> Member wajib menuliskan <strong>Nama Lapangan</strong>,{' '}
+                  <strong>Alamat/Lokasi</strong>, dan <strong>Deskripsi/Petunjuk</strong> lapangan.
+                </li>
+                <li>Coach akan hadir ke lokasi sesuai deskripsi yang diberikan member.</li>
+              </ul>
+              <div className="pt-2 border-t border-white/10 text-[11px] text-purple-300 font-semibold flex items-center gap-1.5">
+                <span>ℹ️ Fleksibilitas:</span>
+                <span>
+                  Memudahkan member yang ingin berlatih lebih dekat dengan domisili atau kantor mereka.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Court List */}
       {courts.length === 0 ? (
         <Card className="!p-12 text-center">
@@ -283,9 +363,6 @@ const CourtsPage = () => {
                       <Badge color={surfaceBadgeColor[court.surface] || 'gray'}>
                         {surfaceLabels[court.surface] || court.surface}
                       </Badge>
-                      {court.isIndoor && (
-                        <Badge color="purple">Indoor</Badge>
-                      )}
                       <Badge color={court.isActive ? 'green' : 'red'}>
                         {court.isActive ? 'Aktif' : 'Nonaktif'}
                       </Badge>
@@ -381,21 +458,6 @@ const CourtsPage = () => {
               }
               required
             />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              id="court-indoor"
-              type="checkbox"
-              checked={formData.isIndoor}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, isIndoor: e.target.checked }))
-              }
-              className="w-4 h-4 text-court-600 border-gray-300 rounded focus:ring-court-500"
-            />
-            <label htmlFor="court-indoor" className="text-sm font-medium text-gray-700">
-              Lapangan Indoor (dalam ruangan)
-            </label>
           </div>
 
           <Input

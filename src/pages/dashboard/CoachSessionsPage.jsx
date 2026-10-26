@@ -118,10 +118,10 @@ export default function CoachSessionsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Sesi Mengajar Saya
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
           Pantau sesi latihan murid, lokasi lapangan dari admin, dan laporkan sesi yang telah selesai.
         </p>
       </div>

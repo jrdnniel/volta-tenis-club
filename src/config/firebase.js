@@ -3,13 +3,14 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Konfigurasi Firebase dengan fallback otomatis agar aplikasi tidak blank screen jika .env terhapus
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCvF1muc8euVXitYcrZcdnWrNm1SYjWAvU',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'volta-tenis-club.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'volta-tenis-club',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'volta-tenis-club.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '798602462281',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:798602462281:web:2014f33689aed84066eb98',
 };
 
 // Validasi config sebelum inisialisasi

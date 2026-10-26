@@ -35,7 +35,7 @@ export const getAllCoaches = async () => {
     where('isActive', '==', true)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
+  return snapshot.docs.map((doc) => ({ id: doc.id, uid: doc.id, ...doc.data() }));
 };
 
 // Get user by UID

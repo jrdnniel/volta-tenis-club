@@ -15,7 +15,13 @@ import {
   HiCheckCircle,
   HiClock,
   HiArrowTrendingUp,
+  HiBellAlert,
+  HiExclamationTriangle,
 } from 'react-icons/hi2';
+import {
+  getAllPackageOrders,
+  getMemberActivePackages,
+} from '../../services/memberPackageService';
 
 const StatCard = ({ icon: Icon, label, value, subtext, color }) => {
   const colorClasses = {
@@ -56,6 +62,8 @@ const DashboardHome = () => {
   const [recentBookings, setRecentBookings] = useState([]);
   const [recentDues, setRecentDues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expiringPackagesCount, setExpiringPackagesCount] = useState(0);
+  const [memberExpiringPkg, setMemberExpiringPkg] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -93,6 +101,17 @@ const DashboardHome = () => {
             query(collection(db, 'dues'), where('status', 'in', [DUES_STATUS.UNPAID, DUES_STATUS.PARTIAL]), limit(5))
           );
           setRecentDues(recentDuesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+
+          // Check paket hampir habis untuk admin
+          try {
+            const allPackages = await getAllPackageOrders();
+            const expCount = allPackages.filter(
+              (p) => p.status === 'active' && (p.remainingSessions ?? p.sessionCount ?? 1) <= 2 && (p.remainingSessions ?? 1) > 0
+            ).length;
+            setExpiringPackagesCount(expCount);
+          } catch (e) {
+            console.error('Error fetching package orders for admin:', e);
+          }
         } else {
           // Member/Coach: fetch own stats
           const uid = userProfile?.uid;
@@ -124,6 +143,17 @@ const DashboardHome = () => {
             query(collection(db, 'dues'), where('userId', '==', uid), orderBy('year', 'desc'), orderBy('month', 'desc'), limit(5))
           );
           setRecentDues(recentDuesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+
+          // Check paket aktif member yang hampir habis
+          try {
+            const myActivePkgs = await getMemberActivePackages(uid);
+            const foundExpiring = myActivePkgs.find(
+              (p) => (p.remainingSessions ?? 1) <= 2 && (p.remainingSessions ?? 1) > 0
+            );
+            setMemberExpiringPkg(foundExpiring || null);
+          } catch (e) {
+            console.error('Error fetching member packages:', e);
+          }
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -158,6 +188,67 @@ const DashboardHome = () => {
             : 'Berikut ringkasan aktivitas Anda.'}
         </p>
       </div>
+
+      {/* Alert Pengingat Paket Hampir Habis untuk Admin */}
+      {isAdmin && expiringPackagesCount > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-3xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-amber-950 animate-in fade-in">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0">
+              <HiBellAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-800">
+                  Perhatian Admin
+                </span>
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              </div>
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">
+                Ada {expiringPackagesCount} Member dengan Kuota Paket Hampir Habis
+              </h3>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Sisa kuota sesi member tinggal 1–2 sesi. Anda dapat mengirimkan pengingat perpanjangan via aplikasi atau WhatsApp.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/dashboard/members"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-amber-700 hover:bg-amber-800 text-white shadow-xs transition-all shrink-0 self-start sm:self-auto"
+          >
+            <span>Kelola & Beritahu Member</span>
+            <span>&rarr;</span>
+          </Link>
+        </div>
+      )}
+
+      {/* Alert Kuota Paket Hampir Habis untuk Member */}
+      {!isAdmin && memberExpiringPkg && (
+        <div className="bg-amber-50 border border-amber-300 rounded-3xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-amber-950 animate-in fade-in">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0">
+              <HiExclamationTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider text-amber-800">
+                Pengingat Kuota Latihan
+              </span>
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">
+                Sisa Kuota Paket &quot;{memberExpiringPkg.packageName}&quot; Tersisa {memberExpiringPkg.remainingSessions} Sesi
+              </h3>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Segera pesan atau perpanjang paket baru di Rate Card agar jadwal latihan rutin Anda bersama Coach {memberExpiringPkg.coachName || 'Volta'} tetap berlanjut!
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/dashboard/rate-card"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black bg-emerald-800 hover:bg-emerald-900 text-white shadow-xs transition-all shrink-0 self-start sm:self-auto"
+          >
+            <span>Perpanjang Paket Sekarang</span>
+            <span>&rarr;</span>
+          </Link>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -261,7 +352,7 @@ const DashboardHome = () => {
                         Pelatih: {booking.coachName || 'Pelatih Volta'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {formatDate(booking.date)} • {booking.startTime} - {booking.endTime} • Lapangan: <span className="font-semibold text-emerald-800">{booking.courtName || 'Menunggu Admin'}</span>
+                        {formatDate(booking.date)} • {booking.startTime} - {booking.endTime} • Lapangan: <span className="font-semibold text-emerald-800">{booking.courtName || 'Basecamp Volta'}</span>
                       </p>
                     </div>
                   </div>

@@ -24,6 +24,7 @@ export const createNotification = async ({
   coachId = null,
   coachName = '',
   targetRole = 'admin',
+  userId = null,
   metadata = {},
 }) => {
   try {
@@ -35,6 +36,7 @@ export const createNotification = async ({
       coachId,
       coachName,
       targetRole,
+      userId,
       read: false,
       createdAt: serverTimestamp(),
       ...metadata,
@@ -47,14 +49,23 @@ export const createNotification = async ({
 };
 
 /**
- * Berlangganan (realtime listener) notifikasi untuk role tertentu (Admin / Coach)
- * Menggunakan onSnapshot agar update seketika saat pelatih melapor
+ * Berlangganan (realtime listener) notifikasi untuk role tertentu (Admin / Member / Coach)
+ * Menggunakan onSnapshot agar update seketika saat ada event
  */
-export const subscribeToNotifications = (targetRole, callback) => {
-  const q = query(
-    collection(db, NOTIFICATIONS_COLLECTION),
-    where('targetRole', '==', targetRole)
-  );
+export const subscribeToNotifications = (targetRole, callback, userId = null) => {
+  let q;
+  if (targetRole === 'member' && userId) {
+    q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      where('targetRole', '==', 'member'),
+      where('userId', '==', userId)
+    );
+  } else {
+    q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      where('targetRole', '==', targetRole)
+    );
+  }
 
   return onSnapshot(
     q,
@@ -99,13 +110,23 @@ export const markNotificationAsRead = async (notificationId) => {
 /**
  * Tandai seluruh notifikasi unread milik role tertentu sebagai telah dibaca
  */
-export const markAllNotificationsAsRead = async (targetRole) => {
+export const markAllNotificationsAsRead = async (targetRole, userId = null) => {
   try {
-    const q = query(
-      collection(db, NOTIFICATIONS_COLLECTION),
-      where('targetRole', '==', targetRole),
-      where('read', '==', false)
-    );
+    let q;
+    if (targetRole === 'member' && userId) {
+      q = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        where('targetRole', '==', 'member'),
+        where('userId', '==', userId),
+        where('read', '==', false)
+      );
+    } else {
+      q = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        where('targetRole', '==', targetRole),
+        where('read', '==', false)
+      );
+    }
     const snap = await getDocs(q);
     const promises = snap.docs.map((d) =>
       updateDoc(doc(db, NOTIFICATIONS_COLLECTION, d.id), {

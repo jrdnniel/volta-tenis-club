@@ -83,10 +83,10 @@ const CoachApplicationsPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Lamaran Pelatih
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
             Review dan kelola lamaran calon pelatih.
             {pendingCount > 0 && (
               <span className="text-amber-600 font-semibold ml-1">

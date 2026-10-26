@@ -55,23 +55,23 @@ const showcaseSlides = [
     ],
   },
   {
-    id: 'indoor-racketclub',
-    badge: 'FASILITAS INDOOR PREMIER',
-    title: 'The Racket Club Indoor',
-    tagline: 'Fullcourt Indoor Court Bebas Cuaca',
+    id: 'out-basecamp',
+    badge: 'COACHING OUT BASECAMP',
+    title: 'Lapangan Out Basecamp',
+    tagline: 'Latihan di Lapangan Pilihan Anda Sendiri',
     description:
-      'Nikmati kenyamanan bermain tenis di lapangan indoor berstandar turnamen. Latihan tetap berlangsung maksimal tanpa terganggu cuaca terik matahari maupun hujan badai.',
+      'Latihan bersama pelatih berlisensi Volta di lapangan pilihan Anda sendiri di luar basecamp klub. Fleksibel, dekat dengan tempat tinggal Anda, didampingi coach profesional.',
     image:
       'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1600&q=85',
-    accentColor: '#E8C58D', // Bronze indoor
-    themeGradient: 'from-[#2a2016]/95 via-slate-950/85 to-slate-950/95',
-    tabLabel: 'The Racket Club',
-    tabShort: '03. Indoor',
-    venuePill: 'The Racket Club Indoor',
+    accentColor: '#C084FC', // Purple out basecamp
+    themeGradient: 'from-[#2a1629]/95 via-slate-950/85 to-slate-950/95',
+    tabLabel: 'Out Basecamp',
+    tabShort: '03. Out Basecamp',
+    venuePill: 'Lapangan Pilihan Member',
     features: [
-      'Fullcourt indoor eksklusif',
-      '1 Player / 2 Players 1 Coach',
-      'Pencahayaan berstandar turnamen',
+      'Pilihan lokasi fleksibel oleh member',
+      '1 Player / 2 Players / Young Coach',
+      'Coach hadir langsung ke lokasi Anda',
     ],
   },
 ];
@@ -113,7 +113,7 @@ export default function VisualShowcase() {
           Visualisasi Energi, Teknik & Fasilitas Latihan
         </h2>
         <p className="text-sm sm:text-base text-slate-500 mt-2.5 leading-relaxed">
-          Eksplorasi tiga pilar program utama kami: Sesi Hitting reli konsisten, Pelatihan berlisensi di Basecamp, dan Fasilitas Indoor premier.
+          Eksplorasi program resmi klub: Sesi Hitting reli konsisten, Pelatihan di Basecamp Volta (Kosek, Emerald, Karya), dan Pelatihan Out Basecamp di lokasi pilihan Anda.
         </p>
       </div>
 

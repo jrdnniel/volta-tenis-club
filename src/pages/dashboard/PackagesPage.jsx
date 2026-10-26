@@ -175,14 +175,10 @@ const PackagesPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-bold tracking-wide uppercase mb-2">
-            <HiSparkles className="w-4 h-4 text-emerald-700" />
-            <span>Kontrol Paket Pelatihan</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Kelola Paket Pelatihan
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
             Admin menentukan daftar paket latihan resmi. Member hanya dapat memesan sesi pelatihan berdasarkan paket yang Anda sediakan di sini.
           </p>
         </div>

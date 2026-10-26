@@ -137,8 +137,12 @@ const DuesPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Iuran & Tagihan</h1>
-          <p className="text-gray-500 mt-1">Kelola tagihan iuran bulanan anggota.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Iuran & Tagihan
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            Kelola tagihan iuran bulanan anggota klub.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" icon={HiArrowPath} onClick={fetchData}>

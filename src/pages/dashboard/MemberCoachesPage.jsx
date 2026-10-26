@@ -61,11 +61,7 @@ const MemberCoachesPage = () => {
           ======================================================== */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-bold tracking-wide uppercase mb-2.5">
-            <HiAcademicCap className="w-4 h-4 text-emerald-700" />
-            <span>Tim Pelatih Profesional</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Daftar Pelatih Volta
           </h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
@@ -248,7 +244,7 @@ const MemberCoachesPage = () => {
                 <div className="p-6 pt-3 border-t border-slate-100/80 mt-4 flex items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => navigate(`/dashboard/booking?coachId=${coach.uid}`)}
+                    onClick={() => navigate(`/dashboard/booking?coachId=${coach.id || coach.uid}`)}
                     className="flex-1 py-2.5 px-4 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
                   >
                     <HiCalendarDays className="w-4 h-4 stroke-[2]" />

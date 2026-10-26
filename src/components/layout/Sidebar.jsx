@@ -51,7 +51,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: 'Semua Sesi Latihan', icon: HiCalendarDays, path: '/dashboard/all-bookings' },
         { label: 'Rate Card Resmi', icon: HiDocumentText, path: '/dashboard/rate-card' },
         { label: 'Paket Pelatihan', icon: HiSparkles, path: '/dashboard/packages' },
-        { label: 'Jadwal Coach', icon: HiClock, path: '/dashboard/coach-schedule' },
       ],
     },
     {
