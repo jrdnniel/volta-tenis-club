@@ -35,7 +35,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       items: [
         { label: 'Kelola Anggota', icon: HiUserGroup, path: '/dashboard/members' },
         { label: 'Kelola Pelatih', icon: HiAcademicCap, path: '/dashboard/coaches' },
-        { label: 'Lamaran Pelatih', icon: HiDocumentText, path: '/dashboard/coach-applications' },
         { label: 'Kelola Undangan', icon: HiLink, path: '/dashboard/invites' },
       ],
     },

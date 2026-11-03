@@ -154,14 +154,6 @@ const MyBookingsPage = () => {
             Pantau jadwal aktif, status penugasan lapangan, dan riwayat sesi latihan Anda bersama tim pelatih berlisensi.
           </p>
         </div>
-
-        <Link
-          to="/dashboard/booking"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-900/15 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 shrink-0"
-        >
-          <HiPlus className="w-4 h-4 stroke-[2]" />
-          <span>{activePackages.length > 0 ? 'Jadwalkan Sesi' : 'Pesan Paket Baru'}</span>
-        </Link>
       </div>
 
       {/* Banner Status Paket Latihan Aktif */}
@@ -191,12 +183,6 @@ const MyBookingsPage = () => {
             >
               <HiCalendarDays className="w-4 h-4 text-emerald-700" />
               <span>Jadwalkan Sesi</span>
-            </Link>
-            <Link
-              to="/dashboard/booking?action=order"
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20"
-            >
-              + Beli Paket Lain
             </Link>
           </div>
         </div>

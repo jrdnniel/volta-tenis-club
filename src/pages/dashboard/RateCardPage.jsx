@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
   HiCalendarDays,
@@ -200,8 +201,8 @@ const RateCardPage = () => {
           </p>
         </div>
 
-        {/* Khusus Admin: Sembunyikan 'Pesan Paket & Jadwal', ganti dengan tombol Edit Jadwal Basecamp */}
-        {isAdmin ? (
+        {/* Khusus Admin: Tombol Edit Jadwal Basecamp */}
+        {isAdmin && (
           <button
             onClick={handleOpenEditSchedule}
             className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors self-start md:self-auto shadow-xs"
@@ -209,14 +210,6 @@ const RateCardPage = () => {
             <HiCog6Tooth className="w-4 h-4 text-emerald-200" />
             <span>Edit Jadwal Basecamp</span>
           </button>
-        ) : (
-          <Link
-            to="/dashboard/booking"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors self-start md:self-auto"
-          >
-            <HiCalendarDays className="w-4 h-4" />
-            <span>Pesan Paket & Jadwal</span>
-          </Link>
         )}
       </div>
 
@@ -253,7 +246,7 @@ const RateCardPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2 text-[11px]">
               {/* Kosek */}
               <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-100">
-                <span className="font-bold text-slate-900 block">📍 Kosek Polonia:</span>
+                <span className="font-bold text-slate-900 block">Kosek Polonia:</span>
                 {kosekSched.map((s, idx) => (
                   <span key={idx} className="text-slate-600 block">
                     • {s.daysText}: {s.timeText}
@@ -266,7 +259,7 @@ const RateCardPage = () => {
 
               {/* Karya */}
               <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-100">
-                <span className="font-bold text-slate-900 block">📍 Indoor Karya (Bebas Hujan):</span>
+                <span className="font-bold text-slate-900 block">Indoor Karya (Bebas Hujan):</span>
                 {karyaSched.map((s, idx) => (
                   <span key={idx} className="text-slate-600 block">
                     • {s.daysText}: {s.timeText}
@@ -279,7 +272,7 @@ const RateCardPage = () => {
 
               {/* Emerald */}
               <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-100">
-                <span className="font-bold text-slate-900 block">📍 Emerald Garden:</span>
+                <span className="font-bold text-slate-900 block">Emerald Garden:</span>
                 {emeraldSched.map((s, idx) => (
                   <span key={idx} className="text-slate-600 block">
                     • {s.daysText}: {s.timeText}
@@ -294,265 +287,167 @@ const RateCardPage = () => {
         </div>
       </div>
 
-      {/* Tab Navigasi Rate Card */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
-        {[
-          { id: 'all', label: 'Semua Rate Card' },
-          { id: 'head_coach', label: 'Head Coach Abdi' },
-          { id: 'basecamp', label: 'Coaching Basecamp (Kosek, Emerald & Karya)' },
-          { id: 'out_basecamp', label: 'Coaching Out Basecamp' },
-          { id: 'junior', label: 'Junior Class (Usia 5/6+ Thn)' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-              activeTab === tab.id
-                ? 'bg-emerald-800 text-white'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* =========================================================================
-          KONTEN RATE CARD: BERLATIH DENGAN HEAD COACH VOLTA (COACH ABDI)
-          - Member memilih sendiri lapangan yang ingin dimainkan
-          - Khusus kelas Junior & Senior Performance dilaksanakan di In Basecamp Kosek
-          ========================================================================= */}
-      {(activeTab === 'all' || activeTab === 'head_coach') && (
-        <div className="max-w-4xl mx-auto rounded-2xl bg-[#142318] text-slate-100 p-6 sm:p-7 border border-[#263e2d] shadow-md space-y-6">
-          {/* Header Profil Head Coach */}
-          <div className="flex flex-col md:flex-row gap-6 items-start">
-            {/* Foto / Brosur Coach Abdi */}
-            <div
-              onClick={() =>
-                setModalImage({
-                  src: '/images/ratecard-headcoach.jpg',
-                  title: 'Brosur Resmi: Head Coach Abdi — Volta Tennis Club',
-                })
-              }
-              className="w-full md:w-56 h-72 rounded-xl overflow-hidden bg-slate-900 border border-white/15 relative shrink-0 cursor-pointer group shadow-sm"
-              title="Klik untuk memperbesar dokumen brosur asli"
+      {/* Tab Navigasi Rate Card (Dihilangkan pada role admin) */}
+      {!isAdmin && (
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+          {[
+            { id: 'all', label: 'Semua Rate Card' },
+            { id: 'head_coach', label: 'Head Coach Abdi' },
+            { id: 'basecamp', label: 'Coaching Basecamp (Kosek, Emerald & Karya)' },
+            { id: 'out_basecamp', label: 'Coaching Out Basecamp' },
+            { id: 'junior', label: 'Junior Class (Usia 5/6+ Thn)' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-emerald-800 text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
             >
-              <img
-                src="/images/ratecard-headcoach.jpg"
-                alt="Head Coach Abdi Volta Tennis Club"
-                className="w-full h-full object-cover object-top"
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="px-3 py-1.5 rounded-lg bg-white text-slate-900 text-xs font-semibold shadow-sm">
-                  Lihat Brosur Asli
-                </span>
-              </div>
-              <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-emerald-900/90 text-emerald-200 text-[10px] font-semibold tracking-wide border border-emerald-500/30">
-                Head Coach
-              </div>
-            </div>
-
-            {/* Profil & Prestasi */}
-            <div className="flex-1 space-y-3.5">
-              <div>
-                <span className="text-[11px] font-semibold text-emerald-400 tracking-wider uppercase">
-                  Pelatih Kepala Klub
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-0.5">
-                  Coach Abdi
-                </h2>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Head Coach at Volta Tennis Club
-                </p>
-              </div>
-
-              {/* Daftar Prestasi Resmi */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300 block">
-                  Prestasi & Rekam Jejak Turnamen:
-                </span>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-200">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>Juara Ganda Putra Selekda PON Sumut</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>Peringkat #53 Tunggal Putra Indonesia</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>Eks Peringkat #27 Ganda Putra Indonesia</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>Medali Emas POPWIL I Sumatera</span>
-                  </li>
-                  <li className="flex items-start gap-2 sm:col-span-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>Medali Emas Turnamen Segitiga Emas ID MY TH 2014</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Kebijakan Lapangan & Fasilitas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-500/30 space-y-1">
-                  <span className="font-semibold text-white block">Ketentuan Lapangan:</span>
-                  <p className="text-emerald-100 text-xs leading-relaxed">
-                    Member memilih dan menentukan sendiri lapangan yang ingin dimainkan (contoh: The Racket Club atau lapangan pilihan Anda).
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-500/30 space-y-1">
-                  <span className="font-semibold text-white block">Fasilitas Termasuk:</span>
-                  <p className="text-emerald-100 text-xs leading-relaxed">
-                    Fee sudah termasuk bola tenis, raket latihan, dan ballboy selama sesi berlangsung.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabel Paket Tarif (1 Person, 2 Persons, Junior/Senior Performance) */}
-          <div className="space-y-4 pt-2">
-            <h3 className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">
-              Daftar Tarif Pelatihan Resmi:
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Card 1: 1 Person 1 Coach */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">1 Person 1 Coach</h4>
-                      <span className="text-xs text-slate-300">Privat Intensif 60 Menit</span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-emerald-300 bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/30">
-                      Fullcourt
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center py-1 border-b border-white/10">
-                      <span className="text-slate-300">1 Sesi (60 Menit)</span>
-                      <span className="font-bold text-white text-sm">Rp 350.000</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 border-b border-white/10">
-                      <div>
-                        <span className="text-slate-300 block">10 Sesi</span>
-                        <span className="text-[10px] text-emerald-400">Hemat Rp 250.000</span>
-                      </div>
-                      <span className="font-bold text-emerald-300 text-sm">Rp 3.250.000</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <div>
-                        <span className="text-slate-300 block">30 Sesi (Paket Prestasi)</span>
-                        <span className="text-[10px] text-emerald-400">Hemat Rp 1.500.000</span>
-                      </div>
-                      <span className="font-bold text-emerald-300 text-sm">Rp 9.000.000</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-white/10 mt-3 text-[11px] text-slate-400">
-                  Lapangan ditentukan sendiri oleh member &bull; Bola, raket & ballboy termasuk
-                </div>
-              </div>
-
-              {/* Card 2: 2 Persons 1 Coach */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">2 Persons 1 Coach</h4>
-                      <span className="text-xs text-slate-300">Semi-Privat 2 Pemain (60 Menit)</span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-emerald-300 bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/30">
-                      Fullcourt
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center py-1 border-b border-white/10">
-                      <span className="text-slate-300">1 Sesi (60 Menit)</span>
-                      <span className="font-bold text-white text-sm">Rp 400.000</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 border-b border-white/10">
-                      <div>
-                        <span className="text-slate-300 block">10 Sesi</span>
-                        <span className="text-[10px] text-emerald-400">Hemat Rp 250.000</span>
-                      </div>
-                      <span className="font-bold text-emerald-300 text-sm">Rp 3.750.000</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <div>
-                        <span className="text-slate-300 block">30 Sesi (Paket Prestasi)</span>
-                        <span className="text-[10px] text-emerald-400">Hemat Rp 1.500.000</span>
-                      </div>
-                      <span className="font-bold text-emerald-300 text-sm">Rp 10.500.000</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-white/10 mt-3 text-[11px] text-slate-400">
-                  Lapangan ditentukan sendiri oleh member &bull; Bola, raket & ballboy termasuk
-                </div>
-              </div>
-            </div>
-
-            {/* Banner Card 3: Junior + Performance Class (Khusus In Basecamp Kosek) */}
-            <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
-              <div className="space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 block">
-                  Khusus Dilaksanakan di In Basecamp
-                </span>
-                <h4 className="font-bold text-white text-sm sm:text-base">
-                  Junior + Performance Class with Head Coach Abdi
-                </h4>
-                <p className="text-emerald-200 text-xs">
-                  Setiap Senin & Jumat, pukul 17.00 – 19.00 WIB di <strong>Basecamp Kosek Polonia</strong> (sudah termasuk bola, lapangan basecamp, dan asisten pelatih).
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="text-right bg-white/10 px-3 py-2 rounded-lg border border-white/15">
-                  <span className="text-[10px] text-emerald-300 block">Junior Class</span>
-                  <span className="font-bold text-white text-sm">Rp 225.000</span>
-                </div>
-                <div className="text-right bg-white/10 px-3 py-2 rounded-lg border border-white/15">
-                  <span className="text-[10px] text-emerald-300 block">Senior Class</span>
-                  <span className="font-bold text-white text-sm">Rp 300.000</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Card */}
-          <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-            <div>
-              <span>Masa berlaku paket 1 tahun setelah pembelian &bull; Pembayaran di awal</span>
-            </div>
-
-            {isAdmin ? (
-              <div className="px-4 py-2 rounded-lg bg-emerald-950/80 border border-emerald-400/30 text-emerald-200 font-semibold text-xs">
-                Tarif Resmi Head Coach untuk Anggota
-              </div>
-            ) : (
-              <Link
-                to="/dashboard/booking?action=order&packageId=rc_headcoach_1p_1c_single"
-                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors text-center"
-              >
-                Pilih Paket Head Coach & Lanjut
-              </Link>
-            )}
-          </div>
+              {tab.label}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* KONTEN 2 KARTU RATE CARD RESMI */}
-      {(activeTab === 'all' || activeTab === 'basecamp' || activeTab === 'out_basecamp') && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch max-w-4xl mx-auto">
+      {/* =========================================================================
+          KONTEN KARTU RATE CARD RESMI (Head Coach, Basecamp, Out Basecamp)
+          - Desain seragam & proporsional untuk ketiga jenis paket
+          - Member bebas memilih lapangan untuk Head Coach Abdi
+          ========================================================================= */}
+      {(activeTab === 'all' || activeTab === 'head_coach' || activeTab === 'basecamp' || activeTab === 'out_basecamp') && (
+        <div className={`grid gap-6 items-stretch mx-auto ${
+          activeTab === 'all'
+            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl'
+            : 'grid-cols-1 max-w-md'
+        }`}>
+          {/* KARTU 1: HEAD COACH (COACH ABDI) */}
+          {(activeTab === 'all' || activeTab === 'head_coach') && (
+            <div className="rounded-xl bg-[#172D21] text-[#FAF8F5] p-6 relative flex flex-col justify-between border border-[#2B4B38] h-full shadow-xs">
+              <div className="flex-1 flex flex-col">
+                <div className="text-center pb-3 border-b border-white/15 shrink-0">
+                  <span className="text-xs uppercase font-semibold text-emerald-300 tracking-wider block mb-1">
+                    Official Rate Card
+                  </span>
+                  <h2 className="text-xl font-bold tracking-tight text-white leading-tight">
+                    Head Coach Abdi
+                  </h2>
+                  <p className="text-xs text-emerald-100 mt-0.5">
+                    Bebas Menentukan Lapangan
+                  </p>
+                </div>
+
+                {/* Banner Preview Foto Asli */}
+                <div
+                  onClick={() =>
+                    setModalImage({
+                      src: '/images/ratecard-headcoach.jpg',
+                      title: 'Brosur Resmi: Head Coach Abdi - Volta Tennis Club',
+                    })
+                  }
+                  className="my-3.5 h-36 rounded-lg overflow-hidden bg-black/40 border border-white/20 relative group shrink-0 cursor-pointer"
+                  title="Klik untuk memperbesar dokumen brosur resmi"
+                >
+                  <img
+                    src="/images/ratecard-headcoach.jpg"
+                    alt="Rate Card Head Coach Abdi"
+                    className="w-full h-full object-cover object-top"
+                  />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="px-3 py-1 rounded bg-white text-slate-900 text-xs font-semibold">
+                      Buka Dokumen
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mb-4 p-3 rounded-lg bg-white/10 border border-white/15 text-xs text-emerald-100 leading-relaxed">
+                  <p className="font-semibold text-white mb-0.5">Ketentuan Lapangan & Fasilitas:</p>
+                  <p>
+                    Member bebas memilih lapangan sendiri. Tidak ada in/out basecamp (khusus Performance Class di Kosek Polonia). Termasuk bola, raket & ballboy.
+                  </p>
+                </div>
+
+                {/* Price Table */}
+                <div className="space-y-2.5 text-xs pb-4 border-b border-white/15 flex-1 flex flex-col justify-center">
+                  <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-emerald-200">
+                    <span>Format Pelatihan</span>
+                    <span>1 Sesi / Paket</span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                    <div>
+                      <strong className="block text-white text-xs">1 Player 1 Coach</strong>
+                      <span className="text-xs text-emerald-200/80">60 Menit Privat</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-white text-xs block">Rp 350.000</span>
+                      <span className="text-xs text-emerald-300">10x: Rp 3.250.000</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                    <div>
+                      <strong className="block text-white text-xs">2 Players 1 Coach</strong>
+                      <span className="text-xs text-emerald-200/80">Semi-Privat 2 Orang</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-white text-xs block">Rp 400.000</span>
+                      <span className="text-xs text-emerald-300">10x: Rp 3.750.000</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                    <div>
+                      <strong className="block text-white text-xs">Paket Prestasi (30 Sesi)</strong>
+                      <span className="text-xs text-emerald-200/80">Intensif & Terarah</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-white text-xs block">1P: Rp 9.000.000</span>
+                      <span className="text-xs text-emerald-300">2P: Rp 10.500.000</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center py-1 text-emerald-100/80 text-xs">
+                    <div>
+                      <span className="block text-white font-medium">Performance Class</span>
+                      <span className="text-xs text-emerald-200/70">In Basecamp Kosek (Sen & Jum)</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-white text-xs block">Junior: Rp 225.000</span>
+                      <span className="text-xs text-emerald-300">Senior: Rp 300.000</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-xs text-emerald-200/80 space-y-1">
+                    <p>• Member bebas menentukan lapangan sendiri.</p>
+                    <p>• Sudah termasuk fasilitas bola tenis, raket latihan, dan ballboy.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom CTA */}
+              <div className="pt-4 border-t border-white/15 shrink-0 space-y-2 mt-4">
+                {isAdmin ? (
+                  <div className="w-full text-center py-2.5 rounded-lg bg-emerald-950/70 border border-emerald-400/30 text-emerald-200 font-semibold text-xs">
+                    Tarif Resmi Head Coach untuk Anggota
+                  </div>
+                ) : (
+                  <Link
+                    to="/dashboard/booking?action=order&packageId=rc_headcoach_1p_1c_single"
+                    className="w-full block text-center py-2.5 rounded-lg bg-emerald-400 text-slate-950 font-bold text-xs hover:bg-emerald-300 transition-colors"
+                  >
+                    Pilih Paket Head Coach & Lanjut
+                  </Link>
+                )}
+                <div className="flex items-center justify-between text-xs text-emerald-200/80 pt-1">
+                  <span>@voltatennisclub</span>
+                  <span className="font-mono">0821 7693 8986</span>
+                </div>
+              </div>
+            </div>
+          )}
           {/* KARTU 1: COACHING BASECAMP */}
           {(activeTab === 'all' || activeTab === 'basecamp') && (
             <div className="rounded-xl bg-[#2A4032] text-[#FAF8F5] p-6 relative flex flex-col justify-between border border-[#3A5643] h-full shadow-xs">
@@ -663,7 +558,7 @@ const RateCardPage = () => {
               <div className="pt-4 border-t border-white/15 shrink-0 space-y-2 mt-4">
                 {isAdmin ? (
                   <div className="w-full text-center py-2.5 rounded-lg bg-emerald-950/70 border border-emerald-400/30 text-emerald-200 font-semibold text-xs">
-                    👑 Tarif Resmi Basecamp untuk Anggota
+                    Tarif Resmi Basecamp untuk Anggota
                   </div>
                 ) : (
                   <Link
@@ -789,7 +684,7 @@ const RateCardPage = () => {
               <div className="pt-4 border-t border-white/15 shrink-0 space-y-2 mt-4">
                 {isAdmin ? (
                   <div className="w-full text-center py-2.5 rounded-lg bg-purple-950/70 border border-purple-400/30 text-purple-200 font-semibold text-xs">
-                    👑 Tarif Resmi Out Basecamp untuk Anggota
+                    Tarif Resmi Out Basecamp untuk Anggota
                   </div>
                 ) : (
                   <Link
@@ -940,7 +835,7 @@ const RateCardPage = () => {
               <div className="pt-4 border-t border-white/15 shrink-0 space-y-2 mt-4">
                 {isAdmin ? (
                   <div className="w-full text-center py-2.5 rounded-lg bg-sky-950/70 border border-sky-400/30 text-sky-200 font-semibold text-xs">
-                    👑 Tarif Resmi Junior Group
+                    Tarif Resmi Junior Group
                   </div>
                 ) : (
                   <Link
@@ -1017,7 +912,7 @@ const RateCardPage = () => {
               <div className="pt-4 border-t border-white/15 shrink-0 space-y-2 mt-4">
                 {isAdmin ? (
                   <div className="w-full text-center py-2.5 rounded-lg bg-teal-950/70 border border-teal-400/30 text-teal-200 font-semibold text-xs">
-                    👑 Tarif Resmi Junior Private
+                    Tarif Resmi Junior Private
                   </div>
                 ) : (
                   <Link
@@ -1087,9 +982,9 @@ const RateCardPage = () => {
             {/* Tab Pilihan Lokasi Basecamp */}
             <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2 overflow-x-auto shrink-0">
               {[
-                { id: 'kosek', name: '📍 Kosek Polonia (2 Court)' },
-                { id: 'karya', name: '📍 Indoor Karya (1 Court)' },
-                { id: 'emerald', name: '📍 Emerald Garden (1 Court)' },
+                { id: 'kosek', name: 'Kosek Polonia (2 Court)' },
+                { id: 'karya', name: 'Indoor Karya (1 Court)' },
+                { id: 'emerald', name: 'Emerald Garden (1 Court)' },
               ].map((loc) => (
                 <button
                   key={loc.id}
@@ -1311,58 +1206,59 @@ const RateCardPage = () => {
         </div>
       )}
 
-      {/* LIGHTBOX MODAL RATE CARD */}
-      {modalImage && (
+      {/* LIGHTBOX MODAL RATE CARD (PORTAL LANGSUNG KE BODY) */}
+      {modalImage && typeof document !== 'undefined' && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           onClick={() => setModalImage(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in cursor-zoom-out overflow-hidden"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-sm cursor-zoom-out"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-auto max-w-fit max-h-[96vh] flex flex-col bg-slate-900 rounded-xl overflow-hidden shadow-xl border border-white/20 cursor-default mx-auto my-auto"
+            className="relative w-full max-w-lg sm:max-w-xl max-h-[90vh] flex flex-col bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-white/20 animate-in cursor-default mx-auto"
           >
             {/* Header Modal */}
-            <div className="px-4 py-2.5 bg-slate-950 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div className="px-4 py-3 bg-slate-950 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
                 <p className="font-semibold text-white text-xs sm:text-sm truncate">
                   {modalImage.title}
                 </p>
               </div>
               <button
                 onClick={() => setModalImage(null)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0 ml-2"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0 ml-2"
                 aria-label="Tutup"
               >
-                <HiXMark className="w-4 h-4" />
+                <HiXMark className="w-5 h-5" />
               </button>
             </div>
 
             {/* Gambar Asli High-Res */}
-            <div className="bg-black/95 flex items-center justify-center p-1 sm:p-2 overflow-hidden">
+            <div className="bg-black/95 flex-1 min-h-0 flex items-center justify-center p-2 sm:p-3 overflow-hidden">
               <img
                 src={modalImage.src}
                 alt={modalImage.title}
-                className="max-h-[72vh] sm:max-h-[76vh] w-auto h-auto max-w-[90vw] object-contain rounded-lg shadow-sm block mx-auto"
+                className="max-h-[66vh] sm:max-h-[70vh] w-auto h-auto max-w-full object-contain rounded-lg shadow-sm block mx-auto"
               />
             </div>
 
             {/* Footer Modal */}
             <div className="px-4 py-2.5 bg-slate-950 border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
-              <span className="text-xs text-slate-400">
+              <span className="text-[11px] sm:text-xs text-slate-400">
                 Dokumen tarif resmi Volta Tenis Club
               </span>
               <button
                 onClick={() => setModalImage(null)}
-                className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-lg transition-colors shrink-0"
+                className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-lg transition-colors shrink-0"
               >
                 Tutup
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

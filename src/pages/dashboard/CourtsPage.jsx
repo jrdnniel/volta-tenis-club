@@ -428,7 +428,7 @@ const CourtsPage = () => {
           <Input
             id="court-name"
             label="Nama Lapangan"
-            placeholder="Contoh: Lapangan 1 — Hard Court"
+            placeholder="Contoh: Lapangan 1 - Hard Court"
             value={formData.name}
             onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
             required

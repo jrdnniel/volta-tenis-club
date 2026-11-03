@@ -60,7 +60,7 @@ const CourtGrid = ({ courts, occupiedSlots, selectedDate, currentUserId, onSlotC
       {/* Scrollable grid container */}
       <div className="overflow-x-auto">
         <div className="min-w-[700px]">
-          {/* Grid Header — Time slots */}
+          {/* Grid Header - Time slots */}
           <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: `140px repeat(${TIME_SLOTS.length}, minmax(70px, 1fr))` }}>
             {/* Corner cell */}
             <div className="sticky left-0 z-10 bg-gray-50 p-3 border-r border-gray-200 flex items-center">
@@ -78,7 +78,7 @@ const CourtGrid = ({ courts, occupiedSlots, selectedDate, currentUserId, onSlotC
             ))}
           </div>
 
-          {/* Grid Body — Courts × Time Slots */}
+          {/* Grid Body - Courts × Time Slots */}
           {courts.map((court, courtIndex) => (
             <div
               key={court.id}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import useScrollReveal from '../../hooks/useScrollReveal';
 import VisualShowcase from '../../components/landing/VisualShowcase';
@@ -240,12 +241,85 @@ const LandingPage = () => {
               Tarif & Paket Pelatihan
             </h2>
             <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-              Pilihan paket Coaching di Basecamp resmi Volta maupun Coaching Out Basecamp di lapangan pilihan Anda.
+              Pilihan paket Coaching bersama Head Coach profesional, Coaching di Basecamp resmi Volta, maupun Coaching Out Basecamp di lapangan pilihan Anda.
             </p>
           </div>
 
-          {/* Grid 2 Kartu Resmi */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch max-w-4xl mx-auto">
+          {/* Grid 3 Kartu Rate Card Resmi (Head Coach, Basecamp, Out Basecamp) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 items-stretch max-w-6xl mx-auto">
+
+            {/* Kartu 1: Head Coach (Coach Abdi) */}
+            <div className="rounded-xl bg-[#172D21] text-[#FAF7F0] p-6 sm:p-7 shadow-xs flex flex-col justify-between border border-[#2B4B38] min-h-[540px]">
+              <div>
+                <div className="text-center pb-3.5 border-b border-white/15">
+                  <span className="text-xs uppercase tracking-wider text-emerald-300 font-semibold block mb-1">
+                    Head Coach Volta
+                  </span>
+                  <h3 className="text-2xl font-bold text-white tracking-tight">
+                    Coach Abdi
+                  </h3>
+                  <p className="text-xs text-white/80 mt-1">Bebas Menentukan Lapangan</p>
+                </div>
+
+                <div
+                  onClick={() =>
+                    handleOpenRateCard(
+                      '/images/ratecard-headcoach.jpg',
+                      'Rate Card: Head Coach Abdi - Bebas Tentukan Lapangan'
+                    )
+                  }
+                  className="my-4 h-44 sm:h-48 rounded-lg overflow-hidden bg-black/40 border border-white/20 relative shrink-0 cursor-pointer group"
+                  title="Klik untuk melihat brosur asli Coach Abdi"
+                >
+                  <img
+                    src="/images/ratecard-headcoach.jpg"
+                    alt="Rate Card Coach Abdi"
+                    className="w-full h-full object-cover object-top"
+                  />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="px-3 py-1 rounded bg-white text-slate-900 text-xs font-semibold shadow-xs">
+                      Buka Brosur
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-xs sm:text-sm text-emerald-50/95 leading-relaxed my-5">
+                  <p className="font-semibold text-white">Rincian Paket & Harga</p>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                      <span>1 Player 1 Coach:</span>
+                      <span className="font-semibold text-white">350k (Single) / 3.250k (10x)</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                      <span>2 Players 1 Coach:</span>
+                      <span className="font-semibold text-white">400k (Single) / 3.750k (10x)</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/10">
+                      <span>Paket Prestasi (30x):</span>
+                      <span className="font-semibold text-white">9.000k (1P) / 10.500k (2P)</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-white/10 text-emerald-200 text-xs">
+                      <span>Perf Class (Kosek):</span>
+                      <span className="font-semibold text-white">225k (Junior) / 300k (Senior)</span>
+                    </div>
+                  </div>
+                  <div className="pt-3 text-xs text-emerald-300 space-y-1 border-t border-white/10">
+                    <p>• Member bebas menentukan lapangan sendiri</p>
+                    <p>• Tidak ada in/out basecamp (khusus Perf Class di Kosek)</p>
+                    <p>• Fee includes: bola, raket, & ballboy</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-white/15 shrink-0">
+                <Link
+                  to="/dashboard/booking"
+                  className="w-full block text-center py-2.5 rounded-lg bg-emerald-400 text-[#102318] font-bold text-xs sm:text-sm hover:bg-emerald-300 transition-colors"
+                >
+                  Pilih Sesi Head Coach
+                </Link>
+              </div>
+            </div>
 
             {/* Kartu 1: Coaching Basecamp */}
             <div className="rounded-xl bg-[#2A4032] text-[#FAF7F0] p-6 sm:p-7 shadow-xs flex flex-col justify-between border border-[#3A5643] min-h-[540px]">
@@ -540,9 +614,9 @@ const LandingPage = () => {
 
               <div className="space-y-3 border-b border-stone-800 pb-6 mb-6">
                 {[
-                  { day: 'Senin — Jumat', time: '06:00 — 22:00 WIB' },
-                  { day: 'Sabtu & Akhir Pekan', time: '06:00 — 21:00 WIB' },
-                  { day: 'Minggu (Sparring & Sesi Pagi)', time: '06:00 — 18:00 WIB' },
+                  { day: 'Senin - Jumat', time: '06:00 - 22:00 WIB' },
+                  { day: 'Sabtu & Akhir Pekan', time: '06:00 - 21:00 WIB' },
+                  { day: 'Minggu (Sparring & Sesi Pagi)', time: '06:00 - 18:00 WIB' },
                 ].map((row, i) => (
                   <div key={i} className="flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-slate-300 font-medium">{row.day}</span>
@@ -737,58 +811,59 @@ const LandingPage = () => {
         </div>
       </footer>
 
-      {/* LIGHTBOX MODAL RATE CARD */}
-      {rateCardModal.isOpen && (
+      {/* LIGHTBOX MODAL RATE CARD (PORTAL LANGSUNG KE BODY AGAR SELALU PAS DI TENGAH LAYAR) */}
+      {rateCardModal.isOpen && typeof document !== 'undefined' && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           onClick={handleCloseRateCard}
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in cursor-zoom-out overflow-hidden"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-sm cursor-zoom-out"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-auto max-w-fit max-h-[96vh] flex flex-col bg-slate-900 rounded-xl overflow-hidden shadow-xl border border-white/20 cursor-default mx-auto my-auto"
+            className="relative w-full max-w-lg sm:max-w-xl max-h-[90vh] flex flex-col bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-white/20 animate-in cursor-default mx-auto"
           >
             {/* Header Modal */}
-            <div className="px-4 py-2.5 bg-slate-950 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div className="px-4 py-3 bg-slate-950 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
                 <p className="font-semibold text-white text-xs sm:text-sm truncate">
                   {rateCardModal.title}
                 </p>
               </div>
               <button
                 onClick={handleCloseRateCard}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0 ml-2"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0 ml-2"
                 aria-label="Tutup"
               >
-                <HiXMark className="w-4 h-4" />
+                <HiXMark className="w-5 h-5" />
               </button>
             </div>
 
             {/* Gambar Asli High-Res */}
-            <div className="bg-black/95 flex items-center justify-center p-1 sm:p-2 overflow-hidden">
+            <div className="bg-black/95 flex-1 min-h-0 flex items-center justify-center p-2 sm:p-3 overflow-hidden">
               <img
                 src={rateCardModal.imageSrc}
                 alt={rateCardModal.title}
-                className="max-h-[72vh] sm:max-h-[76vh] w-auto h-auto max-w-[90vw] object-contain rounded-lg shadow-sm block mx-auto"
+                className="max-h-[66vh] sm:max-h-[70vh] w-auto h-auto max-w-full object-contain rounded-lg shadow-sm block mx-auto"
               />
             </div>
 
             {/* Footer Modal */}
             <div className="px-4 py-2.5 bg-slate-950 border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
-              <span className="text-xs text-slate-400">
+              <span className="text-[11px] sm:text-xs text-slate-400">
                 Dokumen tarif resmi Volta Tenis Club
               </span>
               <Link
                 to="/dashboard/booking"
-                className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs rounded-lg transition-colors shrink-0"
+                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg transition-colors shrink-0"
               >
                 Pesan Latihan Sekarang
               </Link>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

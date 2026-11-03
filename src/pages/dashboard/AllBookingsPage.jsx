@@ -19,11 +19,14 @@ import {
 import { getAllCoaches } from '../../services/memberService';
 import { createNotification } from '../../services/notificationService';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { format, parseISO } from 'date-fns';
+import { id } from 'date-fns/locale';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Spinner from '../../components/common/Spinner';
 import StatusChip from '../../components/common/StatusChip';
+import Avatar from '../../components/common/Avatar';
 import Modal from '../../components/common/Modal';
 import {
   HiCalendarDays,
@@ -40,6 +43,10 @@ import {
   HiSquare3Stack3D,
   HiBellAlert,
   HiAdjustmentsHorizontal,
+  HiSquares2X2,
+  HiTableCells,
+  HiMagnifyingGlass,
+  HiPhone,
 } from 'react-icons/hi2';
 
 const AllBookingsPage = () => {
@@ -52,10 +59,14 @@ const AllBookingsPage = () => {
   const [allMemberPackages, setAllMemberPackages] = useState([]);
   const [confirmingPackageId, setConfirmingPackageId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, confirmed, cancelled
-  const [typeFilter, setTypeFilter] = useState('all'); // all, need_coach, basecamp, out_basecamp
+  const [filter, setFilter] = useState('all'); // all, belum_selesai, selesai, dibatalkan
+  const [typeFilter, setTypeFilter] = useState('all'); // all, need_coach, basecamp, out_basecamp, member_court
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Search & Tampilan Sesi Latihan
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [bookingViewMode, setBookingViewMode] = useState('cards'); // 'cards' | 'table'
 
   // Modal Penugasan Coach oleh Admin (untuk booking 'auto_by_admin')
   const [assignCoachModalOpen, setAssignCoachModalOpen] = useState(false);
@@ -139,7 +150,7 @@ const AllBookingsPage = () => {
       try {
         await createNotification({
           title: 'Pelatih Latihan Telah Ditugaskan oleh Admin',
-          message: `Admin Volta telah menugaskan Coach ${coachObj.displayName} untuk sesi latihan Anda pada tanggal ${selectedBookingForCoach.date} (${selectedBookingForCoach.startTime} — ${selectedBookingForCoach.endTime}) di ${selectedBookingForCoach.courtName}.`,
+          message: `Admin Volta telah menugaskan Coach ${coachObj.displayName} untuk sesi latihan Anda pada tanggal ${selectedBookingForCoach.date} (${selectedBookingForCoach.startTime} - ${selectedBookingForCoach.endTime}) di ${selectedBookingForCoach.courtName}.`,
           type: 'coach_assigned',
           userId: selectedBookingForCoach.userId,
           role: 'member',
@@ -344,68 +355,96 @@ const AllBookingsPage = () => {
     }
   };
 
+  // Helper deteksi status yang sudah tidak aktif (dibatalkan atau selesai)
+  const isCancelledBooking = (b) => {
+    const s = String(b?.status || '').toLowerCase().trim();
+    return s === 'cancelled' || s === 'dibatalkan' || s === BOOKING_STATUS.CANCELLED;
+  };
+
+  const isCompletedBooking = (b) => {
+    const s = String(b?.status || '').toLowerCase().trim();
+    return (
+      s === 'completed' ||
+      s === 'selesai' ||
+      s === BOOKING_STATUS.COMPLETED ||
+      s === BOOKING_STATUS.COMPLETED_BY_COACH ||
+      s === 'completed_by_coach'
+    );
+  };
+
   // Hitung jumlah sesi per kategori lapangan & penugasan coach
   // Sesi yang sudah dibatalkan atau selesai tidak memerlukan penugasan coach
   const needCoachCount = bookings.filter(
     (b) =>
-      b.status !== BOOKING_STATUS.CANCELLED &&
-      b.status !== 'cancelled' &&
-      b.status !== BOOKING_STATUS.COMPLETED &&
-      b.status !== BOOKING_STATUS.COMPLETED_BY_COACH &&
+      !isCancelledBooking(b) &&
+      !isCompletedBooking(b) &&
       (b.coachId === 'auto_by_admin' ||
         b.coachName === 'Ditentukan oleh Admin Volta' ||
         !b.coachId)
   ).length;
-  const basecampCount = bookings.filter((b) => b.courtType !== 'out_basecamp').length;
+  const basecampCount = bookings.filter((b) => b.courtType === 'basecamp' || (!b.courtType && b.courtId !== 'out_basecamp' && b.courtId !== 'member_court')).length;
   const outBasecampCount = bookings.filter((b) => b.courtType === 'out_basecamp').length;
+  const memberCourtCount = bookings.filter((b) => b.courtType === 'member_court').length;
   const pendingReportCount = bookings.filter(
     (b) => b.status === BOOKING_STATUS.COMPLETED_BY_COACH
   ).length;
 
   // Hitung status sesi latihan sesuai kebutuhan admin: Belum Selesai, Selesai (Konfirmasi Coach), Dibatalkan
   const belumSelesaiCount = bookings.filter(
-    (b) => b.status === BOOKING_STATUS.CONFIRMED || b.status === 'pending'
+    (b) => !isCancelledBooking(b) && !isCompletedBooking(b)
   ).length;
-  const selesaiCount = bookings.filter(
-    (b) =>
-      b.status === BOOKING_STATUS.COMPLETED_BY_COACH ||
-      b.status === BOOKING_STATUS.COMPLETED
-  ).length;
-  const dibatalkanCount = bookings.filter(
-    (b) => b.status === BOOKING_STATUS.CANCELLED || b.status === 'cancelled'
-  ).length;
+  const selesaiCount = bookings.filter(isCompletedBooking).length;
+  const dibatalkanCount = bookings.filter(isCancelledBooking).length;
+
+  // Format tanggal sesi bahasa Indonesia yang rapi (cth: Selasa, 03 Nov 2026)
+  const formatBookingDate = (dateStr) => {
+    if (!dateStr) return '-';
+    try {
+      const d = parseISO(dateStr);
+      return format(d, 'EEEE, dd MMM yyyy', { locale: id });
+    } catch {
+      return dateStr;
+    }
+  };
 
   // Filter daftar sesi
   const displayedBookings = bookings.filter((b) => {
+    // 0. Search Filter (nama member, no HP, pelatih, lapangan, paket, tanggal)
+    if (bookingSearch.trim()) {
+      const q = bookingSearch.toLowerCase().trim();
+      const match =
+        (b.userName || '').toLowerCase().includes(q) ||
+        (b.userPhone || '').toLowerCase().includes(q) ||
+        (b.coachName || '').toLowerCase().includes(q) ||
+        (b.courtName || '').toLowerCase().includes(q) ||
+        (b.courtAddress || '').toLowerCase().includes(q) ||
+        (b.packageName || '').toLowerCase().includes(q) ||
+        (b.trainingLevel || '').toLowerCase().includes(q) ||
+        (b.date || '').includes(q);
+      if (!match) return false;
+    }
+
     // 1. Filter Status Sesi (Belum Selesai, Selesai - Dikonfirmasi Coach, Dibatalkan)
     if (filter === 'belum_selesai') {
-      if (b.status !== BOOKING_STATUS.CONFIRMED && b.status !== 'pending') return false;
+      if (isCancelledBooking(b) || isCompletedBooking(b)) return false;
     } else if (filter === 'selesai') {
-      if (
-        b.status !== BOOKING_STATUS.COMPLETED_BY_COACH &&
-        b.status !== BOOKING_STATUS.COMPLETED
-      )
-        return false;
+      if (!isCompletedBooking(b)) return false;
     } else if (filter === 'dibatalkan') {
-      if (b.status !== BOOKING_STATUS.CANCELLED && b.status !== 'cancelled') return false;
+      if (!isCancelledBooking(b)) return false;
     }
 
     // 2. Filter Kategori Lapangan & Coach
     if (typeFilter === 'need_coach') {
-      const isCancelledOrDone =
-        b.status === BOOKING_STATUS.CANCELLED ||
-        b.status === 'cancelled' ||
-        b.status === BOOKING_STATUS.COMPLETED ||
-        b.status === BOOKING_STATUS.COMPLETED_BY_COACH;
-      if (isCancelledOrDone) return false;
+      if (isCancelledBooking(b) || isCompletedBooking(b)) return false;
       return (
         b.coachId === 'auto_by_admin' ||
         b.coachName === 'Ditentukan oleh Admin Volta' ||
         !b.coachId
       );
     }
-    if (typeFilter === 'basecamp') return b.courtType !== 'out_basecamp';
+    if (typeFilter === 'basecamp') return b.courtType === 'basecamp' || (!b.courtType && b.courtId !== 'out_basecamp' && b.courtId !== 'member_court');
     if (typeFilter === 'out_basecamp') return b.courtType === 'out_basecamp';
+    if (typeFilter === 'member_court') return b.courtType === 'member_court';
     return true;
   });
 
@@ -520,13 +559,68 @@ const AllBookingsPage = () => {
             </div>
           )}
 
-          {/* Stats & Filter Bar Sesuai Kebutuhan Admin */}
-          <div className="space-y-3">
+          {/* Controls: Search Bar & View Mode Toggle */}
+          <div className="space-y-3.5 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Search Bar Real-Time */}
+              <div className="relative flex-1 max-w-md">
+                <HiMagnifyingGlass className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Cari nama member, pelatih, lapangan, atau tanggal..."
+                  value={bookingSearch}
+                  onChange={(e) => setBookingSearch(e.target.value)}
+                  className="w-full pl-9 pr-9 py-2 bg-slate-50/70 hover:bg-white focus:bg-white rounded-xl border border-slate-200 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                />
+                {bookingSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setBookingSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                    title="Hapus pencarian"
+                  >
+                    <HiXMark className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* View Mode Switcher (Kartu Rinci vs Tabel Ringkas) */}
+              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <span className="text-xs text-slate-400 font-semibold hidden md:inline">Tampilan:</span>
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+                  <button
+                    type="button"
+                    onClick={() => setBookingViewMode('cards')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      bookingViewMode === 'cards'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    <HiSquares2X2 className="w-4 h-4" />
+                    <span>Kartu Rinci</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingViewMode('table')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      bookingViewMode === 'table'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    <HiTableCells className="w-4 h-4" />
+                    <span>Tabel Ringkas</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Status Tabs: Belum Selesai vs Selesai (Konfirmasi Coach) vs Dibatalkan */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
               <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
                 <HiAdjustmentsHorizontal className="w-4 h-4 text-slate-400" />
-                Status Sesi:
+                Status:
               </span>
 
               <button
@@ -589,7 +683,7 @@ const AllBookingsPage = () => {
                   {selesaiCount}
                 </span>
                 {pendingReportCount > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-blue-500 " title="Ada laporan selesai perlu konfirmasi"></span>
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" title="Ada laporan selesai perlu konfirmasi"></span>
                 )}
               </button>
 
@@ -616,13 +710,13 @@ const AllBookingsPage = () => {
             </div>
 
             {/* Sub-filter Kategori Lapangan & Coach */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-400 font-semibold mr-1">Filter Lapangan:</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1 border-t border-slate-100">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-slate-400 font-semibold mr-1">Lapangan:</span>
                 <button
                   type="button"
                   onClick={() => setTypeFilter('all')}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
                     typeFilter === 'all'
                       ? 'bg-slate-800 text-white shadow-xs'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -634,35 +728,50 @@ const AllBookingsPage = () => {
                   <button
                     type="button"
                     onClick={() => setTypeFilter('need_coach')}
-                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                    className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
                       typeFilter === 'need_coach'
                         ? 'bg-amber-600 text-white shadow-xs font-bold'
                         : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
                     }`}
                   >
-                     Butuh Penugasan Coach ({needCoachCount})
+                    Butuh Penugasan Coach ({needCoachCount})
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setTypeFilter('basecamp')}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
                     typeFilter === 'basecamp'
                       ? 'bg-emerald-700 text-white shadow-xs font-bold'
                       : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
                   }`}
-                >Basecamp ({basecampCount})
+                >
+                  Basecamp ({basecampCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => setTypeFilter('out_basecamp')}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
                     typeFilter === 'out_basecamp'
                       ? 'bg-purple-800 text-white shadow-xs font-bold'
                       : 'bg-purple-50 text-purple-800 hover:bg-purple-100'
                   }`}
-                >Out Basecamp ({outBasecampCount})
+                >
+                  Out Basecamp ({outBasecampCount})
                 </button>
+                {memberCourtCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setTypeFilter('member_court')}
+                    className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                      typeFilter === 'member_court'
+                        ? 'bg-teal-700 text-white shadow-xs font-bold'
+                        : 'bg-teal-50 text-teal-800 hover:bg-teal-100'
+                    }`}
+                  >
+                    Pilihan Member ({memberCourtCount})
+                  </button>
+                )}
               </div>
 
               <div className="text-xs text-slate-500 font-medium">
@@ -671,18 +780,35 @@ const AllBookingsPage = () => {
             </div>
           </div>
 
-          {/* Booking List */}
+          {/* Booking List Container */}
           {displayedBookings.length === 0 ? (
-            <Card className="!p-12 text-center">
+            <Card className="!p-12 text-center border-slate-200">
               <HiCalendarDays className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Sesi Latihan</h3>
-              <p className="text-gray-500 text-sm">Tidak ditemukan sesi latihan sesuai filter yang dipilih.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Tidak Ditemukan Sesi Latihan</h3>
+              <p className="text-gray-500 text-xs max-w-sm mx-auto mb-4">
+                Tidak ada sesi latihan yang cocok dengan filter atau kata kunci pencarian Anda.
+              </p>
+              {(bookingSearch || filter !== 'all' || typeFilter !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBookingSearch('');
+                    setFilter('all');
+                    setTypeFilter('all');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
+                >
+                  Reset Semua Filter
+                </button>
+              )}
             </Card>
-          ) : (
-            <div className="space-y-3">
+          ) : bookingViewMode === 'cards' ? (
+            /* ========================================================
+               TAMPILAN 1: KARTU RINCI (HIGH-CLARITY CARDS)
+               ======================================================== */
+            <div className="space-y-4">
               {displayedBookings.map((booking) => {
-                const isCancelled =
-                  booking.status === BOOKING_STATUS.CANCELLED || booking.status === 'cancelled';
+                const isCancelled = isCancelledBooking(booking);
                 const isCoachAuto =
                   !isCancelled &&
                   (booking.coachId === 'auto_by_admin' ||
@@ -690,135 +816,207 @@ const AllBookingsPage = () => {
                     !booking.coachId);
 
                 return (
-                  <Card key={booking.id} className="!p-4 sm:!p-5 hover:shadow-md transition-shadow">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      {/* Info Sesi */}
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        {/* Tanggal & Jam */}
-                        <div>
-                          <div className="flex items-center gap-1.5 text-gray-900 font-bold">
-                            <HiCalendarDays className="w-4 h-4 text-emerald-700 flex-shrink-0" />
-                            <span>{booking.date}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
-                            <HiClock className="w-3.5 h-3.5" />
-                            <span>{booking.startTime} — {booking.endTime}</span>
-                          </div>
+                  <div
+                    key={booking.id}
+                    className={`rounded-2xl border transition-all shadow-xs hover:shadow-md overflow-hidden bg-white ${
+                      isCancelled
+                        ? 'border-slate-200 opacity-75 bg-slate-50/40'
+                        : isCoachAuto
+                        ? 'border-amber-300 ring-1 ring-amber-200/60'
+                        : booking.status === BOOKING_STATUS.COMPLETED || booking.status === 'completed'
+                        ? 'border-emerald-200/80'
+                        : 'border-slate-200/90'
+                    }`}
+                  >
+                    {/* Header Strip: Tanggal, Waktu, Paket & Status */}
+                    <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                      {/* Left: Info Jadwal & Paket */}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+                        {/* Tanggal */}
+                        <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs sm:text-sm bg-white px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs">
+                          <HiCalendarDays className="w-4 h-4 text-emerald-700 shrink-0" />
+                          <span>{formatBookingDate(booking.date)}</span>
                         </div>
 
-                        {/* Member */}
-                        <div>
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Member</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <HiUser className="w-4 h-4 text-gray-400" />
-                            <span className="font-semibold text-gray-800 truncate">{booking.userName}</span>
-                          </div>
-                          {booking.userPhone && (
-                            <p className="text-xs text-gray-400 mt-0.5">{booking.userPhone}</p>
-                          )}
+                        {/* Jam */}
+                        <div className="flex items-center gap-1 text-xs font-semibold text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-200/80 shadow-2xs">
+                          <HiClock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{booking.startTime} – {booking.endTime} WIB</span>
                         </div>
 
-                        {/* Coach */}
-                        <div>
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pelatih</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <HiAcademicCap className="w-4 h-4 text-emerald-700" />
-                            <span className={`font-semibold truncate ${isCoachAuto ? 'text-amber-800' : 'text-emerald-900'}`}>
-                              {booking.coachName || 'Belum dipilih'}
-                            </span>
-                          </div>
-                          {isCoachAuto && (
-                            <div className="mt-1">
-                              <span className="inline-flex items-center gap-1 text-xs font-bold uppercase text-amber-950 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded ">
-                                 Ditentukan Admin
-                              </span>
-                            </div>
-                          )}
-                          {(booking.packageName || booking.trainingLevel) && (
-                            <span className="inline-block mt-1 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded">
-                              {booking.packageName || booking.trainingLevel}
-                            </span>
-                          )}
-                          {booking.paymentStatus === 'paid' && (
-                            <span className="inline-block mt-1 ml-1 text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200/60 px-2 py-0.5 rounded">
-                              VA {booking.paymentBank ? booking.paymentBank.toUpperCase() : ''} • Lunas
-                            </span>
-                          )}
-                        </div>
+                        {/* Paket Sesi */}
+                        {(booking.packageName || booking.trainingLevel) && (
+                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/60 truncate max-w-[220px] sm:max-w-none">
+                            {booking.packageName || booking.trainingLevel}
+                          </span>
+                        )}
 
-                        {/* Lapangan Latihan yang Dipilih Member */}
-                        <div>
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                            Lapangan (Pilihan Member)
-                          </p>
-                          {booking.courtType === 'out_basecamp' ? (
-                            <div>
-                              <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
-                                <HiMapPin className="w-3 h-3 text-purple-700" />
-                                Out Basecamp
-                              </span>
-                              <p className="text-xs font-bold text-slate-900 mt-1 truncate">
-                                {booking.courtName}
-                              </p>
-                              {booking.courtAddress && (
-                                <p className="text-xs text-slate-500 mt-0.5 truncate">
-                                  {booking.courtAddress}
-                                </p>
-                              )}
-                              {booking.outBasecampDescription && (
-                                <p className="text-xs text-purple-900 bg-purple-50 p-1.5 rounded-lg border border-purple-100 mt-1 italic line-clamp-2">
-                                  &ldquo;{booking.outBasecampDescription}&rdquo;
-                                </p>
-                              )}
-                            </div>
+                        {/* Status Bayar */}
+                        {booking.paymentStatus === 'paid' && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200/60">
+                            Lunas {booking.paymentBank ? `• ${booking.paymentBank.toUpperCase()}` : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Right: Badge Status & Warning Alert */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isCoachAuto && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                            Perlu Ditugaskan Coach
+                          </span>
+                        )}
+                        <StatusChip status={booking.status} />
+                      </div>
+                    </div>
+
+                    {/* Body: 3 Structured Columns (Member, Coach, Lapangan) */}
+                    <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                      {/* 1. Box Member / Pemesan */}
+                      <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
+                        <Avatar name={booking.userName || 'Member'} size="md" className="shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                            Member / Pemesan
+                          </span>
+                          <h4 className="text-sm font-bold text-slate-900 truncate">
+                            {booking.userName || 'Member'}
+                          </h4>
+                          {booking.userPhone ? (
+                            <p className="text-xs text-slate-600 mt-0.5 flex items-center gap-1 truncate font-mono">
+                              <HiPhone className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span>{booking.userPhone}</span>
+                            </p>
                           ) : (
-                            <div>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                  <HiMapPin className="w-3 h-3 text-emerald-700" />
-                                  Basecamp
-                                </span>
-                                {booking.courtId === 'karya_1' || (booking.courtName || '').toLowerCase().includes('karya') ? (
-                                  <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
-                                    Indoor (Bebas Hujan)
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
-                                    Outdoor (Aturan Hujan)
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs font-bold text-slate-900 mt-1 truncate">
-                                {booking.courtName || 'Basecamp Volta'}
-                              </p>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                {booking.courtId === 'karya_1' || (booking.courtName || '').toLowerCase().includes('karya')
-                                  ? 'Karya • Indoor Tertutup Bebas Cuaca'
-                                  : `${booking.courtLocation || 'Basecamp'} • Outdoor (Ketentuan Hujan Berlaku)`}
-                              </p>
-                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5 italic">Tidak ada nomor kontak</p>
                           )}
                         </div>
                       </div>
 
-                      {/* Aksi Admin: Tentukan Lapangan, Konfirmasi Selesai & Batal */}
-                      <div className="flex flex-wrap items-center gap-2 border-t lg:border-t-0 pt-3 lg:pt-0">
-                        <StatusChip status={booking.status} />
+                      {/* 2. Box Pelatih (Coach) */}
+                      <div
+                        className={`p-3.5 rounded-xl border flex items-start gap-3 ${
+                          isCoachAuto
+                            ? 'bg-amber-50/70 border-amber-200 ring-1 ring-amber-200/60'
+                            : 'bg-slate-50/70 border-slate-100'
+                        }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                            isCoachAuto
+                              ? 'bg-amber-200 text-amber-900 font-bold'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          <HiAcademicCap className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                            Pelatih (Coach)
+                          </span>
+                          <h4
+                            className={`text-sm font-bold truncate ${
+                              isCoachAuto ? 'text-amber-900' : 'text-slate-900'
+                            }`}
+                          >
+                            {booking.coachName || 'Belum Ditentukan'}
+                          </h4>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {isCoachAuto ? 'Dipilih oleh Admin Volta' : 'Pelatih Resmi Volta'}
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Jika Coach lapor selesai, tampilkan tombol Konfirmasi Selesai untuk Admin */}
+                      {/* 3. Box Lapangan & Venue */}
+                      <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-200/70 flex items-center justify-center text-slate-700 shrink-0">
+                          <HiMapPin className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                            {booking.courtType === 'member_court' ? (
+                              <span className="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200">
+                                Pilihan Member
+                              </span>
+                            ) : booking.courtType === 'out_basecamp' ? (
+                              <span className="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                                Out Basecamp
+                              </span>
+                            ) : (
+                              <>
+                                <span className="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                  Basecamp
+                                </span>
+                                {booking.courtId === 'karya_1' || (booking.courtName || '').toLowerCase().includes('karya') ? (
+                                  <span className="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
+                                    Indoor
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                                    Outdoor
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          <h4 className="text-sm font-bold text-slate-900 truncate">
+                            {booking.courtName || 'Basecamp Volta'}
+                          </h4>
+
+                          {booking.courtAddress && (
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">
+                              {booking.courtAddress}
+                            </p>
+                          )}
+
+                          {booking.outBasecampDescription && (
+                            <div className="mt-1.5 p-1.5 bg-white rounded-lg border border-slate-200/80 text-[11px] text-slate-600 italic line-clamp-2">
+                              &ldquo;{booking.outBasecampDescription}&rdquo;
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer: Catatan Khusus & Action Buttons */}
+                    <div className="px-4 py-3 bg-white border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      {/* Left: Catatan Evaluasi atau Fokus Sesi */}
+                      <div className="text-xs space-y-1 min-w-0">
+                        {booking.coachNotes && (
+                          <div className="flex items-center gap-1.5 text-emerald-900 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                            <HiCheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
+                            <span className="truncate">
+                              <strong>Laporan Coach:</strong> &ldquo;{booking.coachNotes}&rdquo;
+                            </span>
+                          </div>
+                        )}
+                        {booking.notes && (
+                          <p className="text-slate-600 truncate">
+                            <strong>Fokus Latihan:</strong> {booking.notes}
+                          </p>
+                        )}
+                        {!booking.coachNotes && !booking.notes && (
+                          <span className="text-slate-400 text-[11px]">Tidak ada catatan khusus sesi</span>
+                        )}
+                      </div>
+
+                      {/* Right: Tombol Aksi Admin */}
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                        {/* Konfirmasi Selesai jika coach sudah lapor */}
                         {booking.status === BOOKING_STATUS.COMPLETED_BY_COACH && (
                           <Button
                             size="sm"
                             variant="primary"
                             icon={HiCheckCircle}
                             onClick={() => handleConfirmCompleted(booking)}
-                            className="!bg-emerald-800 hover:!bg-emerald-900 text-white shadow-xs"
+                            className="!bg-emerald-800 hover:!bg-emerald-900 text-white font-bold shadow-xs text-xs"
                           >
                             Konfirmasi Selesai
                           </Button>
                         )}
 
-                        {/* Tombol Tugaskan Coach (khusus booking yang butuh coach dari admin atau ganti coach) */}
+                        {/* Tugaskan / Ganti Coach */}
                         {booking.status === BOOKING_STATUS.CONFIRMED && (
                           <Button
                             size="sm"
@@ -827,14 +1025,15 @@ const AllBookingsPage = () => {
                             onClick={() => handleOpenAssignCoachModal(booking)}
                             className={
                               isCoachAuto
-                                ? '!bg-amber-600 hover:!bg-amber-700 text-white shadow-xs font-bold'
-                                : ''
+                                ? '!bg-amber-600 hover:!bg-amber-700 text-white font-bold shadow-xs text-xs'
+                                : 'font-semibold text-xs'
                             }
                           >
                             {isCoachAuto ? 'Tugaskan Coach' : 'Ganti Coach'}
                           </Button>
                         )}
 
+                        {/* Batal */}
                         {(booking.status === BOOKING_STATUS.CONFIRMED ||
                           booking.status === BOOKING_STATUS.COMPLETED_BY_COACH) && (
                           <Button
@@ -842,36 +1041,168 @@ const AllBookingsPage = () => {
                             size="sm"
                             icon={HiXCircle}
                             onClick={() => handleCancel(booking)}
+                            className="text-xs"
                           >
                             Batal
                           </Button>
                         )}
                       </div>
                     </div>
-
-                    {/* Catatan Pelatih / Evaluasi Murid jika ada */}
-                    {booking.coachNotes && (
-                      <div className="mt-3 pt-2.5 border-t border-emerald-100 bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 text-xs text-emerald-950 flex items-start gap-2">
-                        <HiCheckCircle className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-xs uppercase tracking-wider text-emerald-800 block">
-                            Laporan Selesai dari Coach {booking.coachName}:
-                          </span>
-                          <p className="mt-0.5 leading-relaxed">{booking.coachNotes}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Catatan Sesi Latihan jika ada */}
-                    {booking.notes && (
-                      <div className="mt-2.5 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-start gap-1.5">
-                        <span className="font-semibold text-gray-700">Fokus Latihan:</span>
-                        <span>{booking.notes}</span>
-                      </div>
-                    )}
-                  </Card>
+                  </div>
                 );
               })}
+            </div>
+          ) : (
+            /* ========================================================
+               TAMPILAN 2: TABEL RINGKAS (COMPACT DATA TABLE)
+               ======================================================== */
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-xs">
+              <table className="w-full text-left text-xs text-slate-600 border-collapse">
+                <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4 font-bold">Waktu & Tanggal</th>
+                    <th className="py-3 px-4 font-bold">Member</th>
+                    <th className="py-3 px-4 font-bold">Pelatih (Coach)</th>
+                    <th className="py-3 px-4 font-bold">Lapangan</th>
+                    <th className="py-3 px-4 font-bold">Paket & Bayar</th>
+                    <th className="py-3 px-4 font-bold">Status</th>
+                    <th className="py-3 px-4 font-bold text-right">Aksi Admin</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {displayedBookings.map((booking) => {
+                    const isCancelled = isCancelledBooking(booking);
+                    const isCoachAuto =
+                      !isCancelled &&
+                      (booking.coachId === 'auto_by_admin' ||
+                        booking.coachName === 'Ditentukan oleh Admin Volta' ||
+                        !booking.coachId);
+
+                    return (
+                      <tr
+                        key={booking.id}
+                        className={`hover:bg-slate-50/80 transition-colors ${
+                          isCancelled ? 'opacity-60 bg-slate-50/30' : ''
+                        }`}
+                      >
+                        {/* Waktu & Tanggal */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="font-bold text-slate-900 block">
+                            {formatBookingDate(booking.date)}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            {booking.startTime} – {booking.endTime} WIB
+                          </span>
+                        </td>
+
+                        {/* Member */}
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-slate-900 block truncate max-w-[140px]">
+                            {booking.userName || 'Member'}
+                          </span>
+                          <span className="text-[11px] text-slate-400 block font-mono">
+                            {booking.userPhone || '-'}
+                          </span>
+                        </td>
+
+                        {/* Pelatih */}
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`font-bold block truncate max-w-[150px] ${
+                              isCoachAuto ? 'text-amber-800' : 'text-slate-900'
+                            }`}
+                          >
+                            {booking.coachName || 'Belum dipilih'}
+                          </span>
+                          {isCoachAuto && (
+                            <span className="inline-block mt-0.5 text-[10px] font-bold uppercase text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
+                              Perlu Ditugaskan
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Lapangan */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            {booking.courtType === 'member_court' ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-teal-100 text-teal-800">
+                                Pilihan Member
+                              </span>
+                            ) : booking.courtType === 'out_basecamp' ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800">
+                                Out Basecamp
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                                Basecamp
+                              </span>
+                            )}
+                          </div>
+                          <span className="font-semibold text-slate-800 block truncate max-w-[170px]">
+                            {booking.courtName || 'Basecamp Volta'}
+                          </span>
+                        </td>
+
+                        {/* Paket & Bayar */}
+                        <td className="py-3.5 px-4">
+                          <span className="font-medium text-slate-800 block truncate max-w-[160px]">
+                            {booking.packageName || '-'}
+                          </span>
+                          {booking.paymentStatus === 'paid' && (
+                            <span className="text-[10px] font-bold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded">
+                              Lunas {booking.paymentBank ? `• ${booking.paymentBank.toUpperCase()}` : ''}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <StatusChip status={booking.status} />
+                        </td>
+
+                        {/* Aksi */}
+                        <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {booking.status === BOOKING_STATUS.COMPLETED_BY_COACH && (
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                onClick={() => handleConfirmCompleted(booking)}
+                                className="!py-1 !px-2.5 text-xs !bg-emerald-800 font-bold"
+                              >
+                                Konfirmasi
+                              </Button>
+                            )}
+                            {booking.status === BOOKING_STATUS.CONFIRMED && (
+                              <Button
+                                size="sm"
+                                variant={isCoachAuto ? 'primary' : 'secondary'}
+                                onClick={() => handleOpenAssignCoachModal(booking)}
+                                className={`!py-1 !px-2.5 text-xs ${
+                                  isCoachAuto ? '!bg-amber-600 text-white font-bold' : ''
+                                }`}
+                              >
+                                {isCoachAuto ? 'Tugaskan' : 'Ganti'}
+                              </Button>
+                            )}
+                            {(booking.status === BOOKING_STATUS.CONFIRMED ||
+                              booking.status === BOOKING_STATUS.COMPLETED_BY_COACH) && (
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleCancel(booking)}
+                                className="!py-1 !px-2 text-xs"
+                              >
+                                Batal
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -1072,7 +1403,7 @@ const AllBookingsPage = () => {
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1.5 text-amber-950">
               <p><strong>Member:</strong> {selectedBookingForCoach.userName}</p>
               <p><strong>Paket:</strong> {selectedBookingForCoach.packageName || 'Paket Pelatihan'}</p>
-              <p><strong>Waktu Latihan:</strong> {selectedBookingForCoach.date} ({selectedBookingForCoach.startTime} — {selectedBookingForCoach.endTime})</p>
+              <p><strong>Waktu Latihan:</strong> {selectedBookingForCoach.date} ({selectedBookingForCoach.startTime} - {selectedBookingForCoach.endTime})</p>
               <p><strong>Lokasi:</strong> {selectedBookingForCoach.courtName} ({selectedBookingForCoach.courtType === 'basecamp' ? 'Basecamp Volta' : 'Out Basecamp'})</p>
             </div>
 

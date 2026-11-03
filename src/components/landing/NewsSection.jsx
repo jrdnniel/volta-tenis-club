@@ -42,7 +42,7 @@ const newsArticles = [
       coachTip:
         'Kunci utama turnamen bukan memukul bola sekeras mungkin, melainkan menjaga konsistensi deep balls di baseline dan mengurangi unforced error saat reli panjang.',
       actionTo: '/dashboard/booking',
-      actionLabel: 'Siapkan Fisik — Pesan Sesi Latihan',
+      actionLabel: 'Siapkan Fisik - Pesan Sesi Latihan',
     },
   },
   {
@@ -92,7 +92,7 @@ const newsArticles = [
     author: 'Tim Manajemen Volta',
     authorRole: 'Operasional Lapangan & Jadwal',
     fullContent: {
-      lead: 'Menanggapi tingginya antusiasme member yang berlatih setelah jam kerja, manajemen Volta menambah kuota sesi pelatihan pada jam 18:00 — 21:00 WIB.',
+      lead: 'Menanggapi tingginya antusiasme member yang berlatih setelah jam kerja, manajemen Volta menambah kuota sesi pelatihan pada jam 18:00 - 21:00 WIB.',
       sections: [
         {
           heading: 'Pemilihan Lapangan Langsung Oleh Member',

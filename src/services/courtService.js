@@ -238,7 +238,7 @@ export const VOLTA_BASECAMP_LOCATIONS = [
     courts: [
       {
         id: 'kosek_1',
-        name: 'Kosek Polonia — Court 1',
+        name: 'Kosek Polonia - Court 1',
         courtNumber: 1,
         locationId: 'kosek',
         locationName: 'Kosek Polonia',
@@ -252,7 +252,7 @@ export const VOLTA_BASECAMP_LOCATIONS = [
       },
       {
         id: 'kosek_2',
-        name: 'Kosek Polonia — Court 2',
+        name: 'Kosek Polonia - Court 2',
         courtNumber: 2,
         locationId: 'kosek',
         locationName: 'Kosek Polonia',
@@ -284,7 +284,7 @@ export const VOLTA_BASECAMP_LOCATIONS = [
     courts: [
       {
         id: 'emerald_1',
-        name: 'Emerald Garden — Court 1',
+        name: 'Emerald Garden - Court 1',
         courtNumber: 1,
         locationId: 'emerald',
         locationName: 'Emerald Garden',
@@ -315,7 +315,7 @@ export const VOLTA_BASECAMP_LOCATIONS = [
     courts: [
       {
         id: 'karya_1',
-        name: 'Indoor Karya — Court 1',
+        name: 'Indoor Karya - Court 1',
         courtNumber: 1,
         locationId: 'karya',
         locationName: 'Indoor Karya',
@@ -358,7 +358,7 @@ export const OUTDOOR_RAIN_POLICY = {
     badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   },
   between15And30Min: {
-    duration: '15 — 30 Menit',
+    duration: '15 - 30 Menit',
     condition: 'Latihan berlangsung antara 15 hingga 30 menit lalu turun hujan',
     compensation: 'Dihitung 1/2 Sesi (Saran Bayar 1/2 Harga Sesi agar Paket Tetap Utuh)',
     detail: 'Sesi latihan menjadi setengah (1/2) sesi. Karena Volta tidak menyediakan layanan 90 menit untuk mengganti sesi sebelumnya, Admin Volta menyarankan member membayar 1/2 dari harga 1 sesi (contoh: jika 1 sesi 285k, bayar 1/2 harga tersebut ke Volta) agar paket 10 sesi tidak berkurang menjadi 9,5 sesi melainkan tetap utuh 10 sesi.',

@@ -225,12 +225,28 @@ const BookingPage = () => {
     selectedActivePackage?.category === 'out_basecamp';
 
   // Validasi Paket Head Coach Abdi:
-  // Member berlatih langsung bersama Head Coach Abdi dan bebas menentukan lapangan (In & Out Basecamp)
   const isHeadCoachPackage =
     selectedActivePackage?.packageType === 'head_coach' ||
+    selectedActivePackage?.packageType === 'head_coach_private' ||
+    selectedActivePackage?.packageType === 'head_coach_perf' ||
     selectedActivePackage?.packageCategory === 'head_coach' ||
     selectedActivePackage?.category === 'head_coach' ||
     selectedActivePackage?.packageId?.startsWith('rc_headcoach_');
+
+  // Khusus Head Coach Abdi Regular Private: Member bebas menentukan lapangan sendiri (tidak ada in basecamp / out basecamp)
+  const isHeadCoachPrivate =
+    isHeadCoachPackage &&
+    (selectedActivePackage?.packageType === 'head_coach_private' ||
+      selectedActivePackage?.allowedCourtTypes?.includes('member_court') ||
+      (!selectedActivePackage?.packageId?.includes('perf') &&
+        !selectedActivePackage?.packageType?.includes('perf')));
+
+  // Khusus Junior & Senior Performance Class Head Coach Abdi: Khusus dilaksanakan di In Basecamp (Kosek Polonia)
+  const isHeadCoachPerf =
+    isHeadCoachPackage &&
+    (selectedActivePackage?.packageType === 'head_coach_perf' ||
+      selectedActivePackage?.packageId?.includes('perf') ||
+      selectedActivePackage?.packageType?.includes('perf'));
 
   // Validasi Junior Non-Private (Group Class):
   // Member TIDAK BISA memilih pelatih. Pelatih HANYA ditentukan oleh Admin Volta.
@@ -252,10 +268,24 @@ const BookingPage = () => {
   };
 
   useEffect(() => {
-    if (isOutBasecampOnlyPackage) {
+    if (isHeadCoachPrivate) {
+      setSelectedCourtType('member_court');
+    } else if (isHeadCoachPerf) {
+      setSelectedCourtType('basecamp');
+      const kosekCourt = ALL_BASECAMP_COURTS.find((c) => (c.name || '').toLowerCase().includes('kosek')) || {
+        id: 'kosek_1',
+        name: 'Lapangan Kosek - Court 1',
+        location: 'Kosek Polonia',
+        environment: 'outdoor',
+        isIndoor: false,
+      };
+      setSelectedBasecampCourt(kosekCourt);
+    } else if (isOutBasecampOnlyPackage) {
       setSelectedCourtType('out_basecamp');
+    } else if (selectedCourtType === 'member_court') {
+      setSelectedCourtType('basecamp');
     }
-  }, [isOutBasecampOnlyPackage]);
+  }, [isHeadCoachPrivate, isHeadCoachPerf, isOutBasecampOnlyPackage]);
 
   useEffect(() => {
     if (isHeadCoachPackage) {
@@ -459,13 +489,15 @@ const BookingPage = () => {
     const currentCourtId =
       selectedCourtType === 'basecamp'
         ? selectedBasecampCourt?.id || 'kosek_1'
-        : 'out_basecamp';
+        : selectedCourtType === 'member_court'
+          ? 'member_court'
+          : 'out_basecamp';
     const resolvedCourtName =
       outBasecampName === 'Lainnya' ? customOutBasecampName.trim() : outBasecampName.trim();
     const currentCourtName =
       selectedCourtType === 'basecamp'
         ? selectedBasecampCourt?.name || 'Basecamp Volta'
-        : resolvedCourtName || 'Out Basecamp';
+        : resolvedCourtName || (selectedCourtType === 'member_court' ? 'Lapangan Pilihan Member' : 'Out Basecamp');
 
     // 1. Cek bentrok pelatih (1 coach hanya bisa melatih 1 sesi pada jam yang sama)
     // Jika pelatih ditentukan oleh admin ('auto_by_admin'), lewati pengecekan bentrok pelatih
@@ -478,7 +510,7 @@ const BookingPage = () => {
       if (coachConflict) {
         return {
           available: false,
-          reason: `Coach Sedang Melatih (${coachConflict.startTime} — ${coachConflict.endTime})`,
+          reason: `Coach Sedang Melatih (${coachConflict.startTime} - ${coachConflict.endTime})`,
           badgeText: 'Coach Sibuk',
           courtSessionsCount: 0,
           isShared: false,
@@ -500,7 +532,7 @@ const BookingPage = () => {
         const isSameCourt =
           selectedCourtType === 'basecamp' && bCourtType === 'basecamp'
             ? b.courtId === currentCourtId
-            : selectedCourtType === 'out_basecamp' && bCourtType === 'out_basecamp'
+            : (selectedCourtType === 'out_basecamp' || selectedCourtType === 'member_court') && (bCourtType === 'out_basecamp' || bCourtType === 'member_court')
               ? (b.courtName || '').trim().toLowerCase() === currentCourtName.trim().toLowerCase()
               : false;
 
@@ -510,7 +542,7 @@ const BookingPage = () => {
       if (adjacentSessionDifferentCourt) {
         return {
           available: false,
-          reason: `Coach sedang melatih di ${adjacentSessionDifferentCourt.courtName || 'lapangan lain'} (${adjacentSessionDifferentCourt.startTime} — ${adjacentSessionDifferentCourt.endTime}). Untuk jam berurutan, sesi harus di lapangan yang sama.`,
+          reason: `Coach sedang melatih di ${adjacentSessionDifferentCourt.courtName || 'lapangan lain'} (${adjacentSessionDifferentCourt.startTime} - ${adjacentSessionDifferentCourt.endTime}). Untuk jam berurutan, sesi harus di lapangan yang sama.`,
           badgeText: 'Beda Lapangan',
           courtSessionsCount: 0,
           isShared: false,
@@ -539,7 +571,7 @@ const BookingPage = () => {
       if (courtBookings.length === 1) {
         return {
           available: true,
-          reason: 'Tersedia (1/2 Sesi Terisi — Lapangan Bersama)',
+          reason: 'Tersedia (1/2 Sesi Terisi - Lapangan Bersama)',
           badgeText: '1/2 Sesi Tersedia',
           courtSessionsCount: 1,
           isShared: true,
@@ -612,7 +644,7 @@ const BookingPage = () => {
         const isSameCourt =
           selectedCourtType === 'basecamp' && bCourtType === 'basecamp'
             ? b.courtId === currentCourtId
-            : selectedCourtType === 'out_basecamp' && bCourtType === 'out_basecamp'
+            : (selectedCourtType === 'out_basecamp' || selectedCourtType === 'member_court') && (bCourtType === 'out_basecamp' || bCourtType === 'member_court')
               ? (b.courtName || '').trim().toLowerCase() === currentCourtName.trim().toLowerCase()
               : false;
 
@@ -800,8 +832,18 @@ const BookingPage = () => {
     // Validasi Lapangan Pilihan Member
     const resolvedOutBasecampName =
       outBasecampName === 'Lainnya' ? customOutBasecampName.trim() : outBasecampName.trim();
+    const isMemberCourt = isHeadCoachPrivate || selectedCourtType === 'member_court';
 
-    if (selectedCourtType === 'out_basecamp') {
+    if (isMemberCourt) {
+      if (!resolvedOutBasecampName) {
+        setScheduleErrorMsg('Silakan pilih atau ketikkan nama lapangan tenis pilihan Anda.');
+        return;
+      }
+      if (!outBasecampAddress.trim()) {
+        setScheduleErrorMsg('Alamat / lokasi lapangan wajib diisi.');
+        return;
+      }
+    } else if (selectedCourtType === 'out_basecamp') {
       if (!resolvedOutBasecampName) {
         setScheduleErrorMsg('Silakan pilih atau tentukan nama lapangan Out Basecamp.');
         return;
@@ -860,7 +902,9 @@ const BookingPage = () => {
       const courtLocationChosen =
         selectedCourtType === 'basecamp'
           ? selectedBasecampCourt?.locationName || 'Basecamp Volta'
-          : 'Out Basecamp';
+          : isMemberCourt
+            ? 'Pilihan Member'
+            : 'Out Basecamp';
       const courtAddressChosen =
         selectedCourtType === 'basecamp'
           ? selectedBasecampCourt?.address || 'Basecamp Volta'
@@ -876,6 +920,13 @@ const BookingPage = () => {
         : isHeadCoachPackage
         ? (selectedCoachForSession?.displayName || selectedCoachForSession?.name || 'Coach Abdi (Head Coach)')
         : (selectedCoachForSession?.displayName || 'Ditentukan oleh Admin Volta');
+
+      const finalCourtType = isMemberCourt ? 'member_court' : selectedCourtType;
+      const finalCourtId = isMemberCourt
+        ? 'member_court'
+        : selectedCourtType === 'basecamp'
+          ? (selectedBasecampCourt?.id || 'kosek_1')
+          : 'out_basecamp';
 
       const bookingData = {
         userId: uid,
@@ -894,8 +945,8 @@ const BookingPage = () => {
         notes: memberNotes.trim(),
         trainingLevel: selectedActivePackage.packageName,
         // Informasi Lapangan yang Ditentukan Member
-        courtType: selectedCourtType, // 'basecamp' | 'out_basecamp'
-        courtId: selectedCourtType === 'basecamp' ? (selectedBasecampCourt?.id || 'kosek_1') : 'out_basecamp',
+        courtType: finalCourtType,
+        courtId: finalCourtId,
         courtName: courtNameChosen,
         courtLocation: courtLocationChosen,
         courtAddress: courtAddressChosen,
@@ -905,7 +956,7 @@ const BookingPage = () => {
           selectedCourtType === 'basecamp' && selectedBasecampCourt?.isIndoor
             ? 'Indoor (Bebas Hujan)'
             : 'Outdoor: <15 mnt reschedule free (tanpa potong sesi), 15-30 mnt hitung 1/2 sesi (opsi bayar 1/2 sesi agar kuota tetap utuh), >30 mnt hitung full 1 sesi (kuota berkurang 1)',
-        outBasecampDescription: selectedCourtType === 'out_basecamp' ? outBasecampDescription.trim() : '',
+        outBasecampDescription: (isMemberCourt || selectedCourtType === 'out_basecamp') ? outBasecampDescription.trim() : '',
         courtStatus: 'assigned',
         paymentStatus: 'paid',
         paymentMethod: 'va_bank',
@@ -923,14 +974,14 @@ const BookingPage = () => {
       // Notifikasi real-time untuk Admin
       await createNotification({
         title: 'Jadwal Sesi Latihan Baru Terkonfirmasi',
-        message: `${userName} telah menjadwalkan sesi latihan bersama Coach ${chosenCoachName} di ${courtNameChosen} (${selectedCourtType === 'basecamp' ? 'Basecamp Volta' : 'Out Basecamp'}) pada tanggal ${formatDate(bookingDate)} jam ${selectedSlot} — ${endTime}.`,
+        message: `${userName} telah menjadwalkan sesi latihan bersama Coach ${chosenCoachName} di ${courtNameChosen} (${selectedCourtType === 'basecamp' ? 'Basecamp Volta' : 'Out Basecamp'}) pada tanggal ${formatDate(bookingDate)} jam ${selectedSlot} - ${endTime}.`,
         type: 'booking_new',
         role: 'admin',
         link: '/dashboard/all-bookings',
       });
 
       setScheduleSuccessMsg(
-        `Sesi latihan bersama Coach ${chosenCoachName} di ${courtNameChosen} berhasil dijadwalkan untuk ${formatDate(bookingDate)}, pukul ${selectedSlot} — ${endTime}.`
+        `Sesi latihan bersama Coach ${chosenCoachName} di ${courtNameChosen} berhasil dijadwalkan untuk ${formatDate(bookingDate)}, pukul ${selectedSlot} - ${endTime}.`
       );
 
       // Refresh paket aktif
@@ -985,7 +1036,7 @@ const BookingPage = () => {
       id: 'head_coach',
       title: 'Head Coach Abdi (Profesional)',
       subtitle: 'Berlatih langsung bersama Head Coach Volta berprestasi nasional. Member bebas menentukan lapangan mana untuk bermain (In Basecamp & Out Basecamp).',
-      badge: '👑 Head Coach Volta',
+      badge: 'Head Coach Volta',
       badgeClass: 'bg-emerald-950 text-emerald-200 border-emerald-700',
       packages: rateCardPackages.filter((p) => p.category === 'head_coach'),
     },
@@ -1084,14 +1135,6 @@ const BookingPage = () => {
               <span>Beli Paket Baru</span>
             </button>
           )}
-
-          <Link
-            to="/dashboard/rate-card"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 shadow-xs transition-all"
-          >
-            <HiDocumentText className="w-4 h-4 text-emerald-700" />
-            <span>Scan Rate Card</span>
-          </Link>
         </div>
       </div>
 
@@ -1237,7 +1280,7 @@ const BookingPage = () => {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
                 {[
                   { id: 'all', label: 'Semua Kategori' },
-                  { id: 'head_coach', label: '👑 Head Coach Abdi' },
+                  { id: 'head_coach', label: 'Head Coach Abdi' },
                   { id: 'basecamp', label: 'Coaching Basecamp' },
                   { id: 'out_basecamp', label: 'Coaching Out Basecamp' },
                   { id: 'junior', label: 'Junior' },
@@ -1793,116 +1836,217 @@ const BookingPage = () => {
                 </div>
               </div>
 
-              {/* Toggle Tab: Lapangan Basecamp vs Out Basecamp */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  disabled={isOutBasecampOnlyPackage}
-                  onClick={() => {
-                    if (!isOutBasecampOnlyPackage) {
-                      setSelectedCourtType('basecamp');
-                    }
-                  }}
-                  className={`p-4 rounded-2xl border text-left transition-all ${
-                    isOutBasecampOnlyPackage
-                      ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
-                      : selectedCourtType === 'basecamp'
-                      ? 'bg-emerald-900 text-white border-emerald-900 shadow-md ring-2 ring-emerald-500/20'
-                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg">🏟️</span>
-                    <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+              {/* JIKA PAKET HEAD COACH REGULAR: MEMBER MENENTUKAN SENDIRI LAPANGAN (TIDAK ADA IN / OUT BASECAMP) */}
+              {isHeadCoachPrivate ? (
+                <div className="bg-emerald-50/70 rounded-2xl p-5 border border-emerald-300 space-y-4 animate-in fade-in">
+                  <div className="flex items-start gap-3 border-b border-emerald-200 pb-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 mt-0.5">
+                      <HiMapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                        Lapangan Ditentukan Sendiri oleh Member
+                      </h4>
+                      <p className="text-xs text-emerald-900/90 leading-relaxed mt-0.5">
+                        Untuk sesi latihan privat bersama Head Coach Abdi, Anda bebas menentukan sendiri lapangan tenis mana yang ingin dimainkan (contoh: The Racket Club / TRC, lapangan perumahan, atau lapangan tenis pilihan Anda).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Nama Lapangan */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Nama Lapangan Tenis Pilihan Anda <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={outBasecampName}
+                        onChange={(e) => setOutBasecampName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-700 cursor-pointer"
+                      >
+                        <option value="" disabled>-- Pilih Rekomendasi Lapangan / Tulis Manual --</option>
+                        {OUT_BASECAMP_COURT_OPTIONS.map((courtName, idx) => (
+                          <option key={idx} value={courtName}>
+                            {idx + 1}. {courtName}
+                          </option>
+                        ))}
+                        <option value="Lainnya">Lainnya (Ketik Manual Nama Lapangan)</option>
+                      </select>
+
+                      {outBasecampName === 'Lainnya' && (
+                        <input
+                          type="text"
+                          required
+                          value={customOutBasecampName}
+                          onChange={(e) => setCustomOutBasecampName(e.target.value)}
+                          placeholder="Ketikkan nama lapangan tenis pilihan Anda..."
+                          className="mt-2 w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 text-xs sm:text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-700"
+                        />
+                      )}
+                    </div>
+
+                    {/* Alamat Lapangan */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Alamat / Lokasi Lengkap Lapangan <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={outBasecampAddress}
+                        onChange={(e) => setOutBasecampAddress(e.target.value)}
+                        placeholder="Contoh: Jl. Mustang No. 1 / TRC The Racket Club"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-700"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Catatan Lapangan */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Catatan Tambahan Lapangan <span className="text-slate-400 font-normal">(Nomor court, patokan, dll)</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={outBasecampDescription}
+                      onChange={(e) => setOutBasecampDescription(e.target.value)}
+                      placeholder="Contoh: Lapangan Indoor Court 1, atas nama Budi..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-700 resize-none"
+                    />
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+                    <strong>Fasilitas Termasuk:</strong> Bola tenis, raket latihan, dan ballboy sudah disediakan oleh Head Coach Abdi.
+                  </div>
+                </div>
+              ) : isHeadCoachPerf ? (
+                /* JIKA PAKET JUNIOR & SENIOR PERFORMANCE CLASS HEAD COACH ABDI */
+                <div className="bg-emerald-950/10 rounded-2xl p-5 border border-emerald-800/30 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 mt-0.5">
+                      <HiMapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                        Khusus In Basecamp - Lapangan Kosek Polonia
+                      </h4>
+                      <p className="text-xs text-slate-600 leading-relaxed mt-0.5">
+                        Kelas Junior & Senior Performance Class bersama Head Coach Abdi khusus dilaksanakan di <strong>In Basecamp Volta (Kosek Polonia)</strong> setiap hari <strong>Senin & Jumat pukul 17.00 – 19.00 WIB</strong>.
+                      </p>
+                      <p className="text-xs text-emerald-800 font-semibold mt-1">
+                        Fasilitas lapangan basecamp, bola tenis, dan asisten pelatih sudah termasuk dalam paket.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* REGULAR PACKAGES: BASECAMP VS OUT BASECAMP */
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      disabled={isOutBasecampOnlyPackage}
+                      onClick={() => {
+                        if (!isOutBasecampOnlyPackage) {
+                          setSelectedCourtType('basecamp');
+                        }
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
                         isOutBasecampOnlyPackage
-                          ? 'bg-slate-200 text-slate-500'
+                          ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
                           : selectedCourtType === 'basecamp'
-                          ? 'bg-emerald-700 text-white'
-                          : 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-emerald-900 text-white border-emerald-900 shadow-md ring-2 ring-emerald-500/20'
+                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
                       }`}
                     >
-                      {isOutBasecampOnlyPackage ? 'Terkunci untuk Paket Ini' : '3 Lokasi • 4 Court'}
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-extrabold leading-snug">
-                    Lapangan Basecamp Volta
-                  </h4>
-                  <p
-                    className={`text-xs mt-1 leading-relaxed ${
-                      isOutBasecampOnlyPackage
-                        ? 'text-slate-400'
-                        : selectedCourtType === 'basecamp'
-                        ? 'text-emerald-100'
-                        : 'text-slate-500'
-                    }`}
-                  >
-                    {isOutBasecampOnlyPackage
-                      ? 'Paket Out Basecamp tidak bisa bermain di Basecamp resmi Volta.'
-                      : 'Tersedia di Lapangan Kosek (2 court), Emerald (1 court), dan Karya (1 court).'}
-                  </p>
-                </button>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-emerald-400">Basecamp</span>
+                        <span
+                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            isOutBasecampOnlyPackage
+                              ? 'bg-slate-200 text-slate-500'
+                              : selectedCourtType === 'basecamp'
+                              ? 'bg-emerald-700 text-white'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          {isOutBasecampOnlyPackage ? 'Terkunci untuk Paket Ini' : '3 Lokasi • 4 Court'}
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-extrabold leading-snug">
+                        Lapangan Basecamp Volta
+                      </h4>
+                      <p
+                        className={`text-xs mt-1 leading-relaxed ${
+                          isOutBasecampOnlyPackage
+                            ? 'text-slate-400'
+                            : selectedCourtType === 'basecamp'
+                            ? 'text-emerald-100'
+                            : 'text-slate-500'
+                        }`}
+                      >
+                        {isOutBasecampOnlyPackage
+                          ? 'Paket Out Basecamp tidak bisa bermain di Basecamp resmi Volta.'
+                          : 'Tersedia di Lapangan Kosek (2 court), Emerald (1 court), dan Karya (1 court).'}
+                      </p>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedCourtType('out_basecamp')}
-                  className={`p-4 rounded-2xl border text-left transition-all ${
-                    selectedCourtType === 'out_basecamp'
-                      ? 'bg-purple-950 text-white border-purple-900 shadow-md ring-2 ring-purple-500/20'
-                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg">📍</span>
-                    <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCourtType('out_basecamp')}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
                         selectedCourtType === 'out_basecamp'
-                          ? 'bg-purple-800 text-white'
-                          : 'bg-purple-100 text-purple-800'
+                          ? 'bg-purple-950 text-white border-purple-900 shadow-md ring-2 ring-purple-500/20'
+                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
                       }`}
                     >
-                      Pilihan Sendiri
-                    </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-purple-300">Out Basecamp</span>
+                        <span
+                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            selectedCourtType === 'out_basecamp'
+                              ? 'bg-purple-800 text-white'
+                              : 'bg-purple-100 text-purple-800'
+                          }`}
+                        >
+                          Pilihan Sendiri
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-extrabold leading-snug">
+                        Lapangan Out Basecamp
+                      </h4>
+                      <p
+                        className={`text-xs mt-1 leading-relaxed ${
+                          selectedCourtType === 'out_basecamp' ? 'text-purple-100' : 'text-slate-500'
+                        }`}
+                      >
+                        Bebas menentukan lapangan selain Volta. Wajib menuliskan nama & alamat/deskripsi lapangan.
+                      </p>
+                    </button>
                   </div>
-                  <h4 className="text-sm font-extrabold leading-snug">
-                    Lapangan Out Basecamp
-                  </h4>
-                  <p
-                    className={`text-xs mt-1 leading-relaxed ${
-                      selectedCourtType === 'out_basecamp' ? 'text-purple-100' : 'text-slate-500'
-                    }`}
-                  >
-                    Bebas menentukan lapangan selain Volta. Wajib menuliskan nama & alamat/deskripsi lapangan.
-                  </p>
-                </button>
-              </div>
 
-              {/* Banner Penjelasan Aturan Lapangan */}
-              {isHeadCoachPackage ? (
-                <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start gap-2.5 text-xs text-emerald-950">
-                  <HiInformationCircle className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                  <p>
-                    <strong>👑 Paket Head Coach Abdi:</strong> Member <strong>bebas menentukan lapangan mana untuk bermain</strong>, baik di <strong>Basecamp resmi Volta</strong> (Kosek, Karya, Emerald) maupun di <strong>Out Basecamp</strong> pilihan Anda (seperti The Racket Club / TRC atau lapangan lainnya). Fee ball, racket & ballboy sudah termasuk!
-                  </p>
-                </div>
-              ) : isOutBasecampOnlyPackage ? (
-                <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl flex items-start gap-2.5 text-xs text-purple-950">
-                  <HiInformationCircle className="w-5 h-5 text-purple-700 shrink-0 mt-0.5" />
-                  <p>
-                    <strong>Khusus Paket Out Basecamp:</strong> Paket ini dirancang khusus untuk latihan di lapangan luar pilihan Anda dan tidak berlaku di Basecamp yang disediakan Volta. Biaya sewa lapangan luar ditanggung secara mandiri oleh member.
-                  </p>
-                </div>
-              ) : selectedCourtType === 'out_basecamp' ? (
-                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
-                  <HiInformationCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-                  <p>
-                    <strong>Catatan Out Basecamp:</strong> Anda menggunakan Paket Basecamp di lapangan luar. Sesi pelatih tetap terjamin, namun biaya sewa lapangan luar di luar dari Volta / member yang membayar pribadi sewa lapangan tersebut.
-                  </p>
-                </div>
-              ) : null}
+                  {/* Banner Penjelasan Aturan Lapangan */}
+                  {isOutBasecampOnlyPackage ? (
+                    <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl flex items-start gap-2.5 text-xs text-purple-950">
+                      <HiInformationCircle className="w-5 h-5 text-purple-700 shrink-0 mt-0.5" />
+                      <p>
+                        <strong>Khusus Paket Out Basecamp:</strong> Paket ini dirancang khusus untuk latihan di lapangan luar pilihan Anda dan tidak berlaku di Basecamp yang disediakan Volta. Biaya sewa lapangan luar ditanggung secara mandiri oleh member.
+                      </p>
+                    </div>
+                  ) : selectedCourtType === 'out_basecamp' ? (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
+                      <HiInformationCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                      <p>
+                        <strong>Catatan Out Basecamp:</strong> Anda menggunakan Paket Basecamp di lapangan luar. Sesi pelatih tetap terjamin, namun biaya sewa lapangan luar di luar dari Volta / member yang membayar pribadi sewa lapangan tersebut.
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              )}
 
               {/* OPSI A: PILIHAN LAPANGAN BASECAMP RESMI VOLTA */}
-              {selectedCourtType === 'basecamp' && (
+              {!isHeadCoachPrivate && !isHeadCoachPerf && selectedCourtType === 'basecamp' && (
                 <div className="bg-slate-50/90 rounded-2xl p-5 border border-slate-200/90 space-y-4 animate-in fade-in">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
                     <div>
@@ -2139,7 +2283,7 @@ const BookingPage = () => {
                       {/* Aturan 2: Main 15 - 30 menit */}
                       <div className="bg-white/95 p-3.5 rounded-xl border border-amber-200 space-y-1.5 shadow-2xs">
                         <div className="flex items-center justify-between">
-                          <span className="font-extrabold text-amber-950 text-xs">2. Latihan 15 — 30 Menit</span>
+                          <span className="font-extrabold text-amber-950 text-xs">2. Latihan 15 - 30 Menit</span>
                           <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
                             Dihitung 1/2 Sesi
                           </span>
@@ -2172,7 +2316,7 @@ const BookingPage = () => {
               )}
 
               {/* OPSI B: LAPANGAN OUT BASECAMP (MEMBER WAJIB MENGISI DESKRIPSI LENGKAP) */}
-              {selectedCourtType === 'out_basecamp' && (
+              {!isHeadCoachPrivate && !isHeadCoachPerf && selectedCourtType === 'out_basecamp' && (
                 <div className="bg-purple-50/60 rounded-2xl p-5 border border-purple-200/90 space-y-4 animate-in fade-in">
                   <div className="flex items-start gap-3 border-b border-purple-100 pb-3">
                     <div className="w-8 h-8 rounded-xl bg-purple-200 text-purple-900 flex items-center justify-center shrink-0 mt-0.5">
@@ -2297,7 +2441,7 @@ const BookingPage = () => {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            👑 HEAD COACH RESMI VOLTA
+                            HEAD COACH RESMI VOLTA
                           </span>
                           <span className="text-[10px] font-bold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
                             Juara Selekda PON Sumut
@@ -2325,8 +2469,8 @@ const BookingPage = () => {
                 <div className="rounded-2xl p-5 border-2 border-sky-400 bg-gradient-to-r from-sky-950 via-sky-900 to-cyan-950 text-white shadow-md relative overflow-hidden">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-400/40 text-sky-300 flex items-center justify-center shrink-0 text-2xl font-bold shadow-inner">
-                        🎾
+                      <div className="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-400/40 text-sky-300 flex items-center justify-center shrink-0 text-xs font-bold uppercase shadow-inner">
+                        Junior
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -2564,7 +2708,7 @@ const BookingPage = () => {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h5 className="text-xs sm:text-sm font-bold text-emerald-950">
-                          Jadwal Resmi Admin Volta — {selectedBasecampCourt?.name || 'Basecamp'}
+                          Jadwal Resmi Admin Volta - {selectedBasecampCourt?.name || 'Basecamp'}
                         </h5>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 border border-emerald-300">
                           Jadwal Ditetapkan Admin
@@ -2667,7 +2811,7 @@ const BookingPage = () => {
                           onClick={() => handleSlotSelection(slot)}
                           title={
                             !isAvailable
-                              ? `${status.reason} — Klik untuk opsi ganti pelatih lain di jam ini!`
+                              ? `${status.reason} - Klik untuk opsi ganti pelatih lain di jam ini!`
                               : status.reason
                           }
                           className={`py-3 px-3 rounded-2xl text-xs font-bold transition-all border flex flex-col items-center justify-center gap-1 text-center relative ${
@@ -2700,7 +2844,7 @@ const BookingPage = () => {
                                 !isAvailable && !isDifferentCourt ? 'line-through' : ''
                               }`}
                             >
-                              {slot} — {slotEndTime}
+                              {slot} - {slotEndTime}
                             </span>
                           </div>
 
@@ -2738,7 +2882,7 @@ const BookingPage = () => {
                   <p className="flex items-start gap-1.5">
                     <HiInformationCircle className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Aturan Sesi Berurutan Coach:</strong> Jika coach Anda baru saja selesai melatih di suatu lapangan (contoh: Kosek pukul 15:00 — 17:00), sesi lanjutan pukul 17:00 — 18:00 <strong>dapat dipesan</strong> selama memilih <strong>lapangan yang sama</strong>. Jam tersebut akan otomatis tidak bisa dipesan jika Anda memilih lapangan yang berbeda.
+                      <strong>Aturan Sesi Berurutan Coach:</strong> Jika coach Anda baru saja selesai melatih di suatu lapangan (contoh: Kosek pukul 15:00 - 17:00), sesi lanjutan pukul 17:00 - 18:00 <strong>dapat dipesan</strong> selama memilih <strong>lapangan yang sama</strong>. Jam tersebut akan otomatis tidak bisa dipesan jika Anda memilih lapangan yang berbeda.
                     </span>
                   </p>
                   <p className="flex items-start gap-1.5 text-emerald-900 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 font-medium">
@@ -2789,7 +2933,7 @@ const BookingPage = () => {
                   <>
                     <span> &bull; Sesi: </span>
                     <strong className="text-emerald-800 font-bold">
-                      {selectedSlot} — {calculateEndTime(selectedSlot)}
+                      {selectedSlot} - {calculateEndTime(selectedSlot)}
                     </strong>
                   </>
                 )}
@@ -2811,7 +2955,7 @@ const BookingPage = () => {
                     <HiCheckCircle className="w-5 h-5" />
                     <span>
                       Gunakan 1 Sesi & Jadwalkan bersama Coach{' '}
-                      {selectedCoachForSession?.displayName?.split('—')[0]?.trim() || 'Volta'}
+                      {selectedCoachForSession?.displayName?.split('-')[0]?.trim() || 'Volta'}
                     </span>
                   </>
                 )}
@@ -2932,7 +3076,7 @@ const BookingPage = () => {
               </button>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-emerald-200 text-xs font-semibold mb-2 backdrop-blur-sm">
                 <HiClock className="w-3.5 h-3.5" />
-                <span>Pukul {alternativeModal.slot} — {calculateEndTime(alternativeModal.slot)}</span>
+                <span>Pukul {alternativeModal.slot} - {calculateEndTime(alternativeModal.slot)}</span>
               </div>
               <h3 className="text-xl font-bold tracking-tight text-white">
                 Tetap Ingin Main Jam {alternativeModal.slot}?
@@ -3012,7 +3156,7 @@ const BookingPage = () => {
                               setSelectedCoachForSession(altCoach);
                               setSelectedSlot(alternativeModal.slot);
                               setScheduleSuccessMsg(
-                                `✓ Berhasil beralih ke ${altCoach.displayName || altCoach.name} untuk sesi pukul ${alternativeModal.slot} — ${calculateEndTime(alternativeModal.slot)}. Silakan simpan jadwal latihan Anda.`
+                                `✓ Berhasil beralih ke ${altCoach.displayName || altCoach.name} untuk sesi pukul ${alternativeModal.slot} - ${calculateEndTime(alternativeModal.slot)}. Silakan simpan jadwal latihan Anda.`
                               );
                               setAlternativeModal(null);
                             }}
@@ -3053,7 +3197,7 @@ const BookingPage = () => {
                     setSelectedCoachForSession(AUTO_ADMIN_COACH);
                     setSelectedSlot(alternativeModal.slot);
                     setScheduleSuccessMsg(
-                      `✓ Jadwal pukul ${alternativeModal.slot} — ${calculateEndTime(alternativeModal.slot)} dipilih dengan opsi pelatih ditentukan Admin Volta. Silakan simpan jadwal latihan Anda.`
+                      `✓ Jadwal pukul ${alternativeModal.slot} - ${calculateEndTime(alternativeModal.slot)} dipilih dengan opsi pelatih ditentukan Admin Volta. Silakan simpan jadwal latihan Anda.`
                     );
                     setAlternativeModal(null);
                   }}

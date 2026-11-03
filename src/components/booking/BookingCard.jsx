@@ -63,7 +63,7 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
               </span>
               <span className="flex items-center gap-1">
                 <HiClock className="w-3.5 h-3.5" />
-                {booking.startTime} — {booking.endTime}
+                {booking.startTime} - {booking.endTime}
               </span>
               {showUser && (
                 <span className="flex items-center gap-1 text-slate-700 font-medium">
@@ -76,7 +76,12 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
             {/* Informasi Lokasi Lapangan (Basecamp Volta vs Out Basecamp) */}
             <div className="pt-0.5 space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap text-xs">
-                {booking.courtType === 'out_basecamp' ? (
+                {booking.courtType === 'member_court' ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200">
+                    <HiMapPin className="w-3 h-3 text-teal-700" />
+                    Pilihan Member
+                  </span>
+                ) : booking.courtType === 'out_basecamp' ? (
                   <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-200">
                     <HiMapPin className="w-3 h-3 text-purple-700" />
                     Out Basecamp
@@ -118,16 +123,16 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
                 )}
               </div>
 
-              {/* Rincian Alamat & Deskripsi jika Out Basecamp */}
-              {booking.courtType === 'out_basecamp' && (booking.courtAddress || booking.outBasecampDescription) && (
-                <div className="text-xs bg-purple-50/70 border border-purple-100 rounded-lg p-2.5 text-purple-950">
+              {/* Rincian Alamat & Deskripsi jika Out Basecamp atau Lapangan Pilihan Member */}
+              {(booking.courtType === 'out_basecamp' || booking.courtType === 'member_court') && (booking.courtAddress || booking.outBasecampDescription) && (
+                <div className={`text-xs ${booking.courtType === 'member_court' ? 'bg-teal-50/70 border-teal-100 text-teal-950' : 'bg-purple-50/70 border-purple-100 text-purple-950'} border rounded-lg p-2.5`}>
                   {booking.courtAddress && (
                     <p className="font-medium">
                       <strong>Alamat:</strong> {booking.courtAddress}
                     </p>
                   )}
                   {booking.outBasecampDescription && (
-                    <p className="mt-0.5 text-purple-900/80 italic">
+                    <p className="mt-0.5 text-slate-700/80 italic">
                       <strong>Deskripsi:</strong> &ldquo;{booking.outBasecampDescription}&rdquo;
                     </p>
                   )}
@@ -142,7 +147,7 @@ const BookingCard = ({ booking, onCancel, showUser = false, cancelLoading = fals
                   <p className="text-xs text-amber-900 bg-amber-50/80 px-2.5 py-1.5 rounded-lg border border-amber-200/70 flex items-start gap-1.5 leading-relaxed">
                     <HiInformationCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Aturan Hujan Outdoor:</strong> &lt;15 mnt (reschedule free tanpa potong kuota), 15—30 mnt (hitung 1/2 sesi & opsi bayar 1/2 sesi agar paket tetap utuh), &gt;30 mnt (hitung full 1 sesi).
+                      <strong>Aturan Hujan Outdoor:</strong> &lt;15 mnt (reschedule free tanpa potong kuota), 15-30 mnt (hitung 1/2 sesi & opsi bayar 1/2 sesi agar paket tetap utuh), &gt;30 mnt (hitung full 1 sesi).
                     </span>
                   </p>
                 )}

@@ -259,7 +259,7 @@ export default function CoachSessionsPage() {
                       <span className="text-xs text-slate-400 font-medium block">Jam Sesi:</span>
                       <span className="font-bold text-slate-900 flex items-center gap-1 mt-0.5">
                         <HiClock className="w-3.5 h-3.5 text-emerald-700" />
-                        {s.startTime} — {s.endTime}
+                        {s.startTime} - {s.endTime}
                       </span>
                     </div>
 

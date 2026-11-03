@@ -89,7 +89,7 @@ const BookingModal = ({ isOpen, onClose, slot, date, dateFormatted, onSubmit, lo
               </div>
               <div>
                 <p className="text-xs text-emerald-600">Waktu</p>
-                <p className="text-sm font-semibold text-emerald-900">{slot.startTime} — {endTime}</p>
+                <p className="text-sm font-semibold text-emerald-900">{slot.startTime} - {endTime}</p>
               </div>
             </div>
 

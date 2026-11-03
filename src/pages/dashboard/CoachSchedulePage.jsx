@@ -151,7 +151,7 @@ const CoachSchedulePage = () => {
                       <div className="flex items-center gap-3">
                         <HiClock className={`w-4 h-4 ${schedule.isAvailable ? 'text-emerald-600' : 'text-gray-400'}`} />
                         <span className="text-sm font-medium text-gray-900">
-                          {schedule.startTime} — {schedule.endTime}
+                          {schedule.startTime} - {schedule.endTime}
                         </span>
                         <Badge color={schedule.isAvailable ? 'green' : 'red'}>
                           {schedule.isAvailable ? 'Tersedia' : 'Nonaktif'}
